@@ -1,0 +1,15 @@
+import streamDeck from "@elgato/streamdeck";
+
+import { CommendationProgress } from "./actions/commendation";
+import { CookingTimer } from "./actions/cooking-timer";
+import { SessionCounter } from "./actions/session-counter";
+import { XboxAchievementProgress } from "./actions/xbox-achievement";
+
+streamDeck.logger.setLevel("info");
+
+streamDeck.actions.registerAction(new CookingTimer());
+streamDeck.actions.registerAction(new SessionCounter());
+streamDeck.actions.registerAction(new CommendationProgress());
+streamDeck.actions.registerAction(new XboxAchievementProgress());
+
+streamDeck.connect();

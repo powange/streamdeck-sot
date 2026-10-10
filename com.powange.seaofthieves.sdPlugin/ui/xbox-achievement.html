@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Succès Xbox</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<style>
+			.help {
+				font-size: 9pt;
+				line-height: 1.4;
+				color: #b0b0b0;
+			}
+			.help code {
+				color: #e0e0e0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<sdpi-item label="Clé OpenXBL">
+			<sdpi-password global setting="xblApiKey" placeholder="Clé API de xbl.io"></sdpi-password>
+		</sdpi-item>
+
+		<sdpi-item label="Succès">
+			<sdpi-select setting="itemId" datasource="getAchievements" hot-reload show-refresh loading="Chargement…" placeholder="Choisir un succès" label-setting="itemLabel"></sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Actualisation">
+			<sdpi-select setting="refreshMinutes" default="0">
+				<option value="0">Seulement à l'appui</option>
+				<option value="15">Toutes les 15 min</option>
+				<option value="30">Toutes les 30 min</option>
+				<option value="60">Toutes les heures</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<details class="help">
+			<summary>Obtenir une clé OpenXBL</summary>
+			<ol>
+				<li>Va sur <code>https://xbl.io</code> et connecte-toi avec ton compte Microsoft / Xbox.</li>
+				<li>Dans le tableau de bord, crée une clé API (« API Keys ») et colle-la ci-dessus.</li>
+			</ol>
+			<p>OpenXBL est un service tiers. L'offre gratuite est limitée (~150 requêtes / heure), les données sont donc mises en cache 10 minutes.</p>
+		</details>
+	</body>
+</html>

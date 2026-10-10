@@ -1,0 +1,20 @@
+{
+	"Name": "Sea of Thieves",
+	"Description": "Minuteurs de cuisson, compteurs de session, progression des commendations et des succès pour Sea of Thieves.",
+	"com.powange.seaofthieves.cooking": {
+		"Name": "Minuteur de cuisson",
+		"Tooltip": "Appuie quand la nourriture est sur le feu : décompte jusqu'à la cuisson, puis alerte avant qu'elle brûle."
+	},
+	"com.powange.seaofthieves.counter": {
+		"Name": "Compteur de session",
+		"Tooltip": "Appuie pour ajouter 1. Maintiens pour remettre à zéro."
+	},
+	"com.powange.seaofthieves.commendation": {
+		"Name": "Commendation",
+		"Tooltip": "Affiche la progression d'une commendation de ton profil pirate seaofthieves.com. Appuie pour actualiser."
+	},
+	"com.powange.seaofthieves.xbox-achievement": {
+		"Name": "Succès Xbox",
+		"Tooltip": "Affiche la progression d'un succès Xbox de Sea of Thieves (OpenXBL). Appuie pour actualiser."
+	}
+}

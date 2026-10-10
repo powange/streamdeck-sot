@@ -1,0 +1,92 @@
+{
+	"$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+	"Name": "Sea of Thieves",
+	"Version": "0.1.0.0",
+	"Author": "powange",
+	"Actions": [
+		{
+			"Name": "Cooking Timer",
+			"UUID": "com.powange.seaofthieves.cooking",
+			"Icon": "imgs/actions/cooking/icon",
+			"Tooltip": "Press when food goes on the stove: counts down until cooked, then warns before it burns.",
+			"PropertyInspectorPath": "ui/cooking-timer.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/cooking/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"Name": "Session Counter",
+			"UUID": "com.powange.seaofthieves.counter",
+			"Icon": "imgs/actions/counter/icon",
+			"Tooltip": "Press to add one. Hold to reset.",
+			"PropertyInspectorPath": "ui/session-counter.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/counter/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"Name": "Commendation",
+			"UUID": "com.powange.seaofthieves.commendation",
+			"Icon": "imgs/actions/commendation/icon",
+			"Tooltip": "Shows the progress of a commendation from your seaofthieves.com pirate profile. Press to refresh.",
+			"PropertyInspectorPath": "ui/commendation.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/commendation/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
+			"Name": "Xbox Achievement",
+			"UUID": "com.powange.seaofthieves.xbox-achievement",
+			"Icon": "imgs/actions/xbox-achievement/icon",
+			"Tooltip": "Shows the progress of a Sea of Thieves Xbox achievement (OpenXBL). Press to refresh.",
+			"PropertyInspectorPath": "ui/xbox-achievement.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/xbox-achievement/key",
+					"ShowTitle": false
+				}
+			]
+		}
+	],
+	"Category": "Sea of Thieves",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "Cooking timers, session counters, commendation and achievement progress for Sea of Thieves.",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "24",
+		"Debug": "enabled"
+	},
+	"UUID": "com.powange.seaofthieves"
+}

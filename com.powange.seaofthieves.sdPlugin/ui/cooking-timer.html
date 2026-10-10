@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Minuteur de cuisson</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+	</head>
+
+	<body>
+		<sdpi-item label="Nourriture">
+			<sdpi-select setting="food" default="fish">
+				<optgroup label="Poissons">
+					<option value="fish">Poisson (45s / 80s)</option>
+					<option value="trophy-fish">Poisson trophée (90s / 180s)</option>
+				</optgroup>
+				<optgroup label="Viandes">
+					<option value="chicken">Poulet (60s / 120s)</option>
+					<option value="pork">Porc (60s / 120s)</option>
+					<option value="snake">Serpent (60s / 120s)</option>
+					<option value="shark">Requin (60s / 120s)</option>
+				</optgroup>
+				<optgroup label="Monstres">
+					<option value="kraken">Kraken (120s / 240s)</option>
+					<option value="megalodon">Mégalodon (120s / 240s)</option>
+				</optgroup>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Cuit après (s)">
+			<sdpi-textfield setting="cookSeconds" pattern="[0-9]*" placeholder="Par défaut"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Brûlé après (s)">
+			<sdpi-textfield setting="burnSeconds" pattern="[0-9]*" placeholder="Par défaut"></sdpi-textfield>
+		</sdpi-item>
+	</body>
+</html>

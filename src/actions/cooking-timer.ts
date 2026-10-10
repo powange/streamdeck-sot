@@ -1,0 +1,195 @@
+import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, SingletonAction, type WillAppearEvent, type WillDisappearEvent } from "@elgato/streamdeck";
+
+import { foodIcon } from "../food-icons";
+import { type Food, getFood } from "../foods";
+import { COLORS, keySvg, place, progressBar, text, toDataUrl } from "../svg";
+
+/** How often running timers are redrawn. */
+const TICK_MS = 250;
+
+/** Seconds before burning at which the key starts flashing. */
+const WARNING_SECONDS = 10;
+
+/** Seconds after burning at which a forgotten timer resets itself. */
+const AUTO_RESET_SECONDS = 300;
+
+type Phase = "idle" | "cooking" | "cooked" | "burnt";
+
+type RunningTimer = {
+	startedAt: number;
+	phase: Phase;
+};
+
+/**
+ * Cooking timer: press when the food goes on the fire, the key counts down until it is cooked, then until it burns.
+ * Press again at any time to stop the timer.
+ */
+@action({ UUID: "com.powange.seaofthieves.cooking" })
+export class CookingTimer extends SingletonAction<CookingSettings> {
+	private readonly settings = new Map<string, CookingSettings>();
+	private readonly timers = new Map<string, RunningTimer>();
+	/** Last image sent per action, to avoid re-sending identical frames. */
+	private readonly images = new Map<string, string>();
+	private ticker: ReturnType<typeof setInterval> | undefined;
+
+	override async onWillAppear(ev: WillAppearEvent<CookingSettings>): Promise<void> {
+		this.settings.set(ev.action.id, ev.payload.settings);
+		this.images.delete(ev.action.id);
+		await this.render(ev.action);
+	}
+
+	override onWillDisappear(ev: WillDisappearEvent<CookingSettings>): void {
+		// Keep the timer running while the key is hidden (page / folder switch), but force a redraw when it comes back.
+		this.images.delete(ev.action.id);
+	}
+
+	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<CookingSettings>): Promise<void> {
+		this.settings.set(ev.action.id, ev.payload.settings);
+		this.images.delete(ev.action.id);
+		await this.render(ev.action);
+	}
+
+	override async onKeyDown(ev: KeyDownEvent<CookingSettings>): Promise<void> {
+		const { id } = ev.action;
+		if (this.timers.has(id)) {
+			this.timers.delete(id);
+		} else {
+			this.timers.set(id, { startedAt: Date.now(), phase: "cooking" });
+		}
+
+		this.updateTicker();
+		await this.render(ev.action);
+	}
+
+	private updateTicker(): void {
+		if (this.timers.size > 0 && this.ticker === undefined) {
+			this.ticker = setInterval(() => void this.tick(), TICK_MS);
+		} else if (this.timers.size === 0 && this.ticker !== undefined) {
+			clearInterval(this.ticker);
+			this.ticker = undefined;
+		}
+	}
+
+	private async tick(): Promise<void> {
+		const now = Date.now();
+		for (const [id, timer] of this.timers) {
+			if (timer.phase === "burnt" && now - timer.startedAt > (this.timing(id).burnSeconds + AUTO_RESET_SECONDS) * 1000) {
+				this.timers.delete(id);
+			}
+		}
+
+		// Only visible actions are enumerated; hidden ones are redrawn by onWillAppear.
+		for (const action of this.actions) {
+			await this.render(action);
+		}
+
+		this.updateTicker();
+	}
+
+	private timing(id: string): Food {
+		const settings = this.settings.get(id) ?? {};
+		const food = getFood(settings.food);
+		const cookSeconds = positive(settings.cookSeconds) ?? food.cookSeconds;
+		const burnSeconds = Math.max(positive(settings.burnSeconds) ?? food.burnSeconds, cookSeconds + 1);
+		return { ...food, cookSeconds, burnSeconds };
+	}
+
+	private async render(action: Action<CookingSettings>): Promise<void> {
+		if (!action.isKey()) {
+			return;
+		}
+
+		const food = this.timing(action.id);
+		const timer = this.timers.get(action.id);
+		const elapsed = timer ? (Date.now() - timer.startedAt) / 1000 : undefined;
+		const phase = getPhase(food, elapsed);
+
+		if (timer && phase !== timer.phase) {
+			timer.phase = phase;
+			if (phase === "cooked") {
+				await action.showOk();
+			} else if (phase === "burnt") {
+				await action.showAlert();
+			}
+		}
+
+		const image = toDataUrl(renderCookingKey(food, elapsed));
+		if (this.images.get(action.id) !== image) {
+			this.images.set(action.id, image);
+			await action.setImage(image);
+		}
+	}
+}
+
+function getPhase(food: Food, elapsed: number | undefined): Phase {
+	if (elapsed === undefined) return "idle";
+	if (elapsed < food.cookSeconds) return "cooking";
+	if (elapsed < food.burnSeconds) return "cooked";
+	return "burnt";
+}
+
+/**
+ * Draws the key for a food, given the seconds elapsed since it was put on the fire (`undefined` when idle).
+ */
+export function renderCookingKey(food: Food, elapsed: number | undefined): string {
+	switch (getPhase(food, elapsed)) {
+		case "idle":
+			return keySvg(
+				place(foodIcon(food.id, "raw"), 72, 50, 1.25) +
+					text(72, 106, food.label, 22) +
+					text(72, 130, formatDuration(food.cookSeconds), 16, COLORS.muted, "normal"),
+			);
+
+		case "cooking": {
+			const remaining = food.cookSeconds - elapsed!;
+			return keySvg(
+				place(foodIcon(food.id, "raw"), 72, 40) +
+					text(72, 98, formatDuration(remaining), 34) +
+					text(72, 120, "CUISSON", 15, COLORS.cooking) +
+					progressBar(elapsed! / food.cookSeconds, COLORS.cooking),
+			);
+		}
+
+		case "cooked": {
+			const remaining = food.burnSeconds - elapsed!;
+			const warning = remaining <= WARNING_SECONDS;
+			const flash = warning && Math.floor(elapsed! * 2) % 2 === 0;
+			return keySvg(
+				place(foodIcon(food.id, "cooked"), 72, 40) +
+					text(72, 98, formatDuration(remaining), 34, warning ? COLORS.danger : COLORS.text) +
+					text(72, 120, warning ? "RETIRE !" : "CUIT !", 15, warning ? COLORS.danger : COLORS.cooked) +
+					progressBar(remaining / (food.burnSeconds - food.cookSeconds), warning ? COLORS.danger : COLORS.cooked),
+				flash ? "#4a1410" : COLORS.sea,
+			);
+		}
+
+		case "burnt":
+			return keySvg(
+				place(foodIcon(food.id, "burnt"), 72, 50, 1.25) + text(72, 112, "BRÛLÉ", 24, COLORS.danger),
+				COLORS.burnt,
+			);
+	}
+}
+
+function formatDuration(seconds: number): string {
+	const total = Math.max(0, Math.ceil(seconds));
+	if (total < 60) {
+		return `${total}s`;
+	}
+	return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function positive(value: unknown): number | undefined {
+	const number = Number(value);
+	return value !== "" && value !== undefined && Number.isFinite(number) && number > 0 ? number : undefined;
+}
+
+/**
+ * Settings for {@link CookingTimer}. Times are optional overrides of the food's defaults; the property inspector stores
+ * them as strings.
+ */
+type CookingSettings = {
+	food?: string;
+	cookSeconds?: number | string;
+	burnSeconds?: number | string;
+};

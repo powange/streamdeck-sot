@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Compteur de session</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+	</head>
+
+	<body>
+		<sdpi-item label="Icône">
+			<sdpi-select setting="kind" default="chest">
+				<option value="chest">Coffre</option>
+				<option value="skull">Crâne</option>
+				<option value="death">Mort</option>
+				<option value="ship">Navire coulé</option>
+				<option value="star">Autre</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Libellé">
+			<sdpi-textfield setting="label" placeholder="Selon l'icône" maxlength="12"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Usage">
+			<p>Appui court : +1. Appui long : remise à zéro.</p>
+		</sdpi-item>
+	</body>
+</html>
