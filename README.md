@@ -2,6 +2,13 @@
 
 Plugin Stream Deck pour Sea of Thieves (bêta).
 
+## Installation
+
+1. Télécharge [com.powange.seaofthieves.streamDeckPlugin](https://github.com/powange/streamdeck-sot/releases/latest/download/com.powange.seaofthieves.streamDeckPlugin) (dernière version).
+2. Double-clique sur le fichier : Stream Deck l'installe (ou le met à jour).
+
+Prérequis : Stream Deck 7.1 ou plus récent, sous Windows.
+
 ## Actions
 
 - **Minuteur de cuisson** : appuie quand la nourriture est posée sur le feu. Le bouton décompte jusqu'à la cuisson, passe au vert, puis clignote en rouge 10 s avant que ça brûle. Un nouvel appui arrête le minuteur.
@@ -39,6 +46,15 @@ npm run pack         # génère le fichier .streamDeckPlugin
 Sous Windows directement, `npx streamdeck link com.powange.seaofthieves.sdPlugin` puis `npm run watch` pour le rechargement à chaud.
 
 Les logs du plugin sont dans `com.powange.seaofthieves.sdPlugin/logs/` (dans le dossier des plugins Stream Deck : `%APPDATA%\Elgato\StreamDeck\Plugins\`).
+
+### Publier une version
+
+Pousser un tag `vX.Y.Z` déclenche le workflow [release.yml](.github/workflows/release.yml), qui construit le plugin et publie une release GitHub avec le fichier `.streamDeckPlugin` :
+
+```bash
+npm version 0.2.0      # met à jour package.json, commite et crée le tag v0.2.0
+git push --follow-tags
+```
 
 ## Temps de cuisson
 

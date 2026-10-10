@@ -1,0 +1,40 @@
+name: Release
+
+# Pushing a tag such as v0.2.0 builds the plugin and publishes a GitHub release with the installable
+# .streamDeckPlugin file (double-click to install).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # The Node.js debugger must not be enabled in distributed builds.
+      - name: Disable debug mode
+        run: |
+          jq 'del(.Nodejs.Debug)' com.powange.seaofthieves.sdPlugin/manifest.json > manifest.tmp
+          mv manifest.tmp com.powange.seaofthieves.sdPlugin/manifest.json
+
+      - name: Pack plugin
+        run: npx streamdeck pack com.powange.seaofthieves.sdPlugin --version "${GITHUB_REF_NAME#v}" --output dist --force --no-file-list
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/com.powange.seaofthieves.streamDeckPlugin --title "$GITHUB_REF_NAME" --generate-notes
