@@ -9,6 +9,7 @@ import {
 	type WillDisappearEvent,
 } from "@elgato/streamdeck";
 
+import { playSound, type SoundSettings } from "../sound";
 import { COLORS, keySvg, place, progressBar, text, toDataUrl } from "../svg";
 import { getTimerPreset, type TimerPreset, timerIcon } from "../timer-presets";
 
@@ -17,6 +18,12 @@ const TICK_MS = 250;
 
 /** How long the key must be held to reset the timer. */
 const LONG_PRESS_MS = 600;
+
+/** A warning sound is played this long before the end of non-repeating timers. */
+const WARNING_MS = 60_000;
+
+/** Ends older than this are not signalled (e.g. a timer that expired while Stream Deck was closed). */
+const STALE_MS = 5_000;
 
 type Phase = "idle" | "running" | "paused" | "finished";
 
@@ -30,14 +37,17 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 	private readonly presses = new Map<string, ReturnType<typeof setTimeout>>();
 	/** Last image sent per action, to avoid re-sending identical frames. */
 	private readonly images = new Map<string, string>();
-	/** Actions already alerted for their current end time. */
-	private readonly alerted = new Set<string>();
+	/** End time already signalled per action, so each end plays its sound once. */
+	private readonly signalled = new Map<string, number>();
+	/** End time already warned per action. */
+	private readonly warned = new Map<string, number>();
 	private ticker: ReturnType<typeof setInterval> | undefined;
 
 	override async onWillAppear(ev: WillAppearEvent<TimerSettings>): Promise<void> {
 		this.settings.set(ev.action.id, ev.payload.settings);
 		this.images.delete(ev.action.id);
 		this.updateTicker();
+		await this.checkTransitions(ev.action.id, ev.payload.settings, Date.now());
 		await this.render(ev.action);
 	}
 
@@ -49,6 +59,7 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 		this.settings.set(ev.action.id, ev.payload.settings);
 		this.images.delete(ev.action.id);
 		this.updateTicker();
+		await this.checkTransitions(ev.action.id, ev.payload.settings, Date.now());
 		await this.render(ev.action);
 	}
 
@@ -99,7 +110,6 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 			if (settings[key] === undefined) delete settings[key];
 		}
 		this.settings.set(action.id, settings);
-		this.alerted.delete(action.id);
 		await action.setSettings(settings);
 		this.updateTicker();
 		await this.render(action);
@@ -116,9 +126,56 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 	}
 
 	private async tick(): Promise<void> {
+		const now = Date.now();
+		for (const [id, settings] of this.settings) {
+			await this.checkTransitions(id, settings, now);
+		}
+
 		// Only visible actions are enumerated; hidden ones are redrawn by onWillAppear.
 		for (const action of this.actions) {
 			await this.render(action);
+		}
+	}
+
+	/**
+	 * Plays sounds and visual feedback near and at the end of a timer. Runs for every timer, including those on hidden
+	 * pages.
+	 */
+	private async checkTransitions(id: string, settings: TimerSettings, now: number): Promise<void> {
+		const { endsAt } = settings;
+		if (endsAt === undefined) {
+			return;
+		}
+
+		const visible = [...this.actions].find((a) => a.id === id);
+		const remaining = endsAt - now;
+		const repeating = isRepeating(settings);
+
+		if (remaining > 0) {
+			if (!repeating && remaining <= WARNING_MS && duration(settings) * 1000 > WARNING_MS && this.warned.get(id) !== endsAt) {
+				this.warned.set(id, endsAt);
+				playSound("warning", settings);
+			}
+			return;
+		}
+
+		const fresh = -remaining < STALE_MS;
+		if (repeating) {
+			// Repeating timers (in-game day) roll over to the next cycle instead of finishing.
+			const cycle = duration(settings) * 1000;
+			const next = { ...settings, endsAt: endsAt + Math.ceil((now - endsAt + 1) / cycle) * cycle };
+			this.settings.set(id, next);
+			if (visible) await visible.setSettings(next);
+			if (fresh) {
+				playSound("ding", settings);
+				if (visible?.isKey()) await visible.showOk();
+			}
+		} else if (this.signalled.get(id) !== endsAt) {
+			this.signalled.set(id, endsAt);
+			if (fresh) {
+				playSound("alarm", settings);
+				if (visible?.isKey()) await visible.showAlert();
+			}
 		}
 	}
 
@@ -127,24 +184,8 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 			return;
 		}
 
-		let settings = this.settings.get(action.id) ?? {};
+		const settings = this.settings.get(action.id) ?? {};
 		const now = Date.now();
-
-		// Repeating timers (in-game day) roll over to the next cycle instead of finishing.
-		if (settings.endsAt !== undefined && settings.endsAt <= now && isRepeating(settings)) {
-			const cycle = duration(settings) * 1000;
-			const endsAt = settings.endsAt + Math.ceil((now - settings.endsAt + 1) / cycle) * cycle;
-			settings = { ...settings, endsAt };
-			this.settings.set(action.id, settings);
-			await action.setSettings(settings);
-			await action.showOk();
-		}
-
-		if (getPhase(settings, now) === "finished" && !this.alerted.has(action.id)) {
-			this.alerted.add(action.id);
-			await action.showAlert();
-		}
-
 		const image = toDataUrl(renderTimerKey(settings, now));
 		if (this.images.get(action.id) !== image) {
 			this.images.set(action.id, image);
@@ -236,7 +277,7 @@ function formatDuration(seconds: number): string {
 /**
  * Settings for {@link GameTimer}. `endsAt` / `remainingMs` hold the running state.
  */
-type TimerSettings = {
+type TimerSettings = SoundSettings & {
 	preset?: string;
 	label?: string;
 	/** Custom duration in minutes; the property inspector stores it as a string. */

@@ -14,6 +14,7 @@ Prérequis : Stream Deck 7.1 ou plus récent, sous Windows.
 - **Minuteur de cuisson** : appuie quand la nourriture est posée sur le feu. Le bouton décompte jusqu'à la cuisson, passe au vert, puis clignote en rouge 10 s avant que ça brûle. Un nouvel appui arrête le minuteur.
   Aliments : poisson, poisson trophée, poulet, porc, serpent, requin, kraken, mégalodon. Les temps peuvent être modifiés dans les réglages du bouton.
 - **Minuteur** : minuteurs de jeu, avec préréglages Mégalodon AFK (1h30) et Journée en jeu (24 min, en boucle), ou durée personnalisée. Appui court : démarrer / pause / reprendre, appui long : remise à zéro. Le minuteur continue même si Stream Deck redémarre.
+- **Sons** (minuteurs de cuisson et de jeu, Windows) : cloche quand c'est cuit ou à chaque nouvelle journée, bips 10 s avant que ça brûle ou 1 min avant la fin d'un minuteur, triple cloche quand c'est brûlé ou terminé. Désactivables par bouton ; le son de fin peut être remplacé par un fichier `.wav`.
 - **Compteur de session** : appui court = +1, appui long = remise à zéro. Icônes : coffre, crâne, mort, navire coulé, autre.
 - **Commendation** : affiche la progression d'une commendation de ton profil pirate [seaofthieves.com](https://www.seaofthieves.com/profile/reputation) (grade, valeur / seuil, image). Choix en cascade : faction → campagne → commendation. Appuie pour actualiser.
 - **Succès Xbox** : affiche la progression d'un succès Xbox de Sea of Thieves via [OpenXBL](https://xbl.io). Appuie pour actualiser.
@@ -47,6 +48,8 @@ npm run pack         # génère le fichier .streamDeckPlugin
 Sous Windows directement, `npx streamdeck link com.powange.seaofthieves.sdPlugin` puis `npm run watch` pour le rechargement à chaud.
 
 Les logs du plugin sont dans `com.powange.seaofthieves.sdPlugin/logs/` (dans le dossier des plugins Stream Deck : `%APPDATA%\Elgato\StreamDeck\Plugins\`).
+
+Les sons de `com.powange.seaofthieves.sdPlugin/sounds/` sont synthétisés par `node scripts/generate-sounds.mjs`.
 
 ### Publier une version
 

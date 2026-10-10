@@ -2,6 +2,7 @@ import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, S
 
 import { foodIcon } from "../food-icons";
 import { type Food, getFood } from "../foods";
+import { playSound, type SoundSettings } from "../sound";
 import { COLORS, keySvg, place, progressBar, text, toDataUrl } from "../svg";
 
 /** How often running timers are redrawn. */
@@ -18,6 +19,8 @@ type Phase = "idle" | "cooking" | "cooked" | "burnt";
 type RunningTimer = {
 	startedAt: number;
 	phase: Phase;
+	/** Whether the "about to burn" warning was given. */
+	warned: boolean;
 };
 
 /**
@@ -54,7 +57,7 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 		if (this.timers.has(id)) {
 			this.timers.delete(id);
 		} else {
-			this.timers.set(id, { startedAt: Date.now(), phase: "cooking" });
+			this.timers.set(id, { startedAt: Date.now(), phase: "cooking", warned: false });
 		}
 
 		this.updateTicker();
@@ -75,6 +78,8 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 		for (const [id, timer] of this.timers) {
 			if (timer.phase === "burnt" && now - timer.startedAt > (this.timing(id).burnSeconds + AUTO_RESET_SECONDS) * 1000) {
 				this.timers.delete(id);
+			} else {
+				await this.checkTransitions(id, timer, now);
 			}
 		}
 
@@ -94,6 +99,33 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 		return { ...food, cookSeconds, burnSeconds };
 	}
 
+	/**
+	 * Plays sounds and visual feedback when a timer changes phase. Runs for every timer, including those on hidden pages.
+	 */
+	private async checkTransitions(id: string, timer: RunningTimer, now: number): Promise<void> {
+		const food = this.timing(id);
+		const elapsed = (now - timer.startedAt) / 1000;
+		const phase = getPhase(food, elapsed);
+		const settings = this.settings.get(id) ?? {};
+		const visible = [...this.actions].find((a) => a.id === id);
+
+		if (phase !== timer.phase) {
+			timer.phase = phase;
+			if (phase === "cooked") {
+				playSound("ding", settings);
+				if (visible?.isKey()) await visible.showOk();
+			} else if (phase === "burnt") {
+				playSound("alarm", settings);
+				if (visible?.isKey()) await visible.showAlert();
+			}
+		}
+
+		if (phase === "cooked" && !timer.warned && food.burnSeconds - elapsed <= WARNING_SECONDS) {
+			timer.warned = true;
+			playSound("warning", settings);
+		}
+	}
+
 	private async render(action: Action<CookingSettings>): Promise<void> {
 		if (!action.isKey()) {
 			return;
@@ -102,16 +134,6 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 		const food = this.timing(action.id);
 		const timer = this.timers.get(action.id);
 		const elapsed = timer ? (Date.now() - timer.startedAt) / 1000 : undefined;
-		const phase = getPhase(food, elapsed);
-
-		if (timer && phase !== timer.phase) {
-			timer.phase = phase;
-			if (phase === "cooked") {
-				await action.showOk();
-			} else if (phase === "burnt") {
-				await action.showAlert();
-			}
-		}
 
 		const image = toDataUrl(renderCookingKey(food, elapsed));
 		if (this.images.get(action.id) !== image) {
@@ -188,7 +210,7 @@ function positive(value: unknown): number | undefined {
  * Settings for {@link CookingTimer}. Times are optional overrides of the food's defaults; the property inspector stores
  * them as strings.
  */
-type CookingSettings = {
+type CookingSettings = SoundSettings & {
 	food?: string;
 	cookSeconds?: number | string;
 	burnSeconds?: number | string;

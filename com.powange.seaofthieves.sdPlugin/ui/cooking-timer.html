@@ -33,5 +33,16 @@
 		<sdpi-item label="Brûlé après (s)">
 			<sdpi-textfield setting="burnSeconds" pattern="[0-9]*" placeholder="Par défaut"></sdpi-textfield>
 		</sdpi-item>
+
+		<sdpi-item label="Son">
+			<sdpi-select setting="sound" default="on">
+				<option value="on">Activé</option>
+				<option value="off">Désactivé</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Son de fin">
+			<sdpi-file setting="soundFile" accept=".wav" label="Choisir un .wav…"></sdpi-file>
+		</sdpi-item>
 	</body>
 </html>
