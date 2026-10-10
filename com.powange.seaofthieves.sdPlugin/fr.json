@@ -1,6 +1,6 @@
 {
 	"Name": "Sea of Thieves",
-	"Description": "Minuteurs de cuisson, compteurs de session, progression des commendations et des succès pour Sea of Thieves.",
+	"Description": "Minuteurs de cuisson et de jeu, compteurs de session, progression des commendations et des succès pour Sea of Thieves.",
 	"com.powange.seaofthieves.cooking": {
 		"Name": "Minuteur de cuisson",
 		"Tooltip": "Appuie quand la nourriture est sur le feu : décompte jusqu'à la cuisson, puis alerte avant qu'elle brûle."
@@ -16,5 +16,9 @@
 	"com.powange.seaofthieves.xbox-achievement": {
 		"Name": "Succès Xbox",
 		"Tooltip": "Affiche la progression d'un succès Xbox de Sea of Thieves (OpenXBL). Appuie pour actualiser."
+	},
+	"com.powange.seaofthieves.timer": {
+		"Name": "Minuteur",
+		"Tooltip": "Mégalodon AFK, journée en jeu ou minuteur personnalisé. Appuie pour démarrer / mettre en pause, maintiens pour remettre à zéro."
 	}
 }

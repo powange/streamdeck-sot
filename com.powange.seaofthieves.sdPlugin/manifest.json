@@ -21,6 +21,22 @@
 			]
 		},
 		{
+			"Name": "Timer",
+			"UUID": "com.powange.seaofthieves.timer",
+			"Icon": "imgs/actions/timer/icon",
+			"Tooltip": "AFK megalodon, in-game day or custom timer. Press to start / pause, hold to reset.",
+			"PropertyInspectorPath": "ui/game-timer.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/timer/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Session Counter",
 			"UUID": "com.powange.seaofthieves.counter",
 			"Icon": "imgs/actions/counter/icon",
@@ -72,7 +88,7 @@
 	"Category": "Sea of Thieves",
 	"CategoryIcon": "imgs/plugin/category-icon",
 	"CodePath": "bin/plugin.js",
-	"Description": "Cooking timers, session counters, commendation and achievement progress for Sea of Thieves.",
+	"Description": "Cooking timers, game timers, session counters, commendation and achievement progress for Sea of Thieves.",
 	"Icon": "imgs/plugin/marketplace",
 	"SDKVersion": 3,
 	"Software": {

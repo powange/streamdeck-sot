@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Minuteur</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+	</head>
+
+	<body>
+		<sdpi-item label="Minuteur">
+			<sdpi-select setting="preset" default="megalodon">
+				<option value="megalodon">Mégalodon AFK (1h30)</option>
+				<option value="day">Journée en jeu (24 min)</option>
+				<option value="custom">Personnalisé</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Durée (min)">
+			<sdpi-textfield setting="minutes" pattern="[0-9.]*" placeholder="Par défaut"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Libellé">
+			<sdpi-textfield setting="label" placeholder="Selon le minuteur" maxlength="12"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Recommencer">
+			<sdpi-select setting="repeat" default="">
+				<option value="">Selon le minuteur</option>
+				<option value="yes">Oui, en boucle</option>
+				<option value="no">Non</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Usage">
+			<p>Appui court : démarrer / pause / reprendre. Appui long : remise à zéro.</p>
+		</sdpi-item>
+	</body>
+</html>
