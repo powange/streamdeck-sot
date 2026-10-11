@@ -133,6 +133,11 @@
 			]
 		}
 	],
+	"ApplicationsToMonitor": {
+		"windows": [
+			"SoTGame.exe"
+		]
+	},
 	"Category": "Sea of Thieves",
 	"CategoryIcon": "imgs/plugin/category-icon",
 	"CodePath": "bin/plugin.js",

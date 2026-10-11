@@ -37,6 +37,11 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 	private readonly refreshTimers = new Map<string, ReturnType<typeof setInterval>>();
 	private readonly titles = new Map<string, string | undefined>();
 
+	/** Text shown when {@link fetchItem} returns nothing; defaults to {@link placeholder}. */
+	protected placeholderFor(_settings: T): [string, string] {
+		return this.placeholder;
+	}
+
 	/** Loads the item configured on a key, or `undefined` if none is selected. */
 	protected abstract fetchItem(settings: T, force: boolean): Promise<ProgressItem | undefined>;
 
@@ -127,7 +132,7 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 		try {
 			const item = await this.fetchItem(settings, force);
 			if (!item) {
-				await action.setImage(toDataUrl(renderMessageKey(this.fallbackIcon, ...this.placeholder, style)));
+				await action.setImage(toDataUrl(renderMessageKey(this.fallbackIcon, ...this.placeholderFor(settings), style)));
 				return false;
 			}
 

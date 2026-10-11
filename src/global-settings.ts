@@ -9,6 +9,18 @@ export type GlobalSettings = {
 	ratCookie?: string;
 	/** OpenXBL API key (https://xbl.io). */
 	xblApiKey?: string;
+	/** Balance recorded when the game was last launched. */
+	gameSession?: GameSession;
+};
+
+export type GameSession = {
+	/** Timestamp (ms) of the game launch. */
+	startedAt: number;
+	/** Timestamp (ms) at which the game was closed, if it was. */
+	endedAt?: number;
+	gold: number;
+	doubloons: number;
+	ancientCoins: number;
 };
 
 let current: GlobalSettings | undefined;
@@ -24,6 +36,18 @@ streamDeck.settings.onDidReceiveGlobalSettings<GlobalSettings>((ev) => {
 export async function getGlobalSettings(): Promise<GlobalSettings> {
 	current ??= (await streamDeck.settings.getGlobalSettings<GlobalSettings>()) ?? {};
 	return current;
+}
+
+/**
+ * Merges changes into the global settings. Stream Deck does not echo the plugin's own changes, so listeners are
+ * notified here.
+ */
+export async function updateGlobalSettings(changes: Partial<GlobalSettings>): Promise<void> {
+	current = { ...(await getGlobalSettings()), ...changes };
+	await streamDeck.settings.setGlobalSettings(current);
+	for (const listener of listeners) {
+		listener(current);
+	}
 }
 
 export function onGlobalSettingsChanged(listener: (settings: GlobalSettings) => void): void {

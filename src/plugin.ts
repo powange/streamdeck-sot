@@ -8,6 +8,7 @@ import { GameTimer } from "./actions/game-timer";
 import { SessionCounter } from "./actions/session-counter";
 import { Stopwatch } from "./actions/stopwatch";
 import { XboxAchievementProgress } from "./actions/xbox-achievement";
+import { watchGameSessions } from "./game-session";
 
 streamDeck.logger.setLevel("info");
 
@@ -19,5 +20,7 @@ streamDeck.actions.registerAction(new CommendationProgress());
 streamDeck.actions.registerAction(new FactionLevelProgress());
 streamDeck.actions.registerAction(new BalanceProgress());
 streamDeck.actions.registerAction(new XboxAchievementProgress());
+
+watchGameSessions();
 
 streamDeck.connect();

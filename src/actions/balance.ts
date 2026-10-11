@@ -2,7 +2,7 @@ import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, t
 
 import { type ProgressItem } from "../api/progress";
 import { clearProfile, getBalance } from "../api/sot";
-import { onGlobalSettingsChanged } from "../global-settings";
+import { getGlobalSettings, onGlobalSettingsChanged } from "../global-settings";
 import { type Currency, currencyIcon } from "../progress-icons";
 import { ProgressAction, type ProgressSettings } from "./progress-action";
 
@@ -17,7 +17,8 @@ const CURRENCY_LABELS: Record<Currency, string> = {
 
 type BalanceSettings = ProgressSettings & {
 	currency?: string;
-	/** "total" (default) or "session" (gains since the session start). */
+	/** "total" (default), "session" (gains since a session started with a long press) or "game" (gains since the
+	 * game was launched). */
 	mode?: string;
 	/** Amount of the currency when the session started. */
 	sessionStart?: number;
@@ -36,23 +37,39 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 
 	private readonly presses = new Map<string, ReturnType<typeof setTimeout>>();
 	private lastToken: string | undefined;
+	private lastGameSession: number | undefined;
 
 	constructor() {
 		super();
 		onGlobalSettingsChanged(async (settings) => {
-			if (settings.ratCookie === this.lastToken) return;
-			this.lastToken = settings.ratCookie;
-			clearProfile();
+			const gameSession = settings.gameSession?.startedAt;
+			if (settings.ratCookie !== this.lastToken) {
+				this.lastToken = settings.ratCookie;
+				clearProfile();
+			} else if (gameSession === this.lastGameSession) {
+				return;
+			}
+			this.lastGameSession = gameSession;
 			await this.refreshAll();
 		});
 	}
 
+	protected override placeholderFor(settings: BalanceSettings): [string, string] {
+		return settings.mode === "game" ? ["Lance", "le jeu"] : this.placeholder;
+	}
+
 	protected override async fetchItem(settings: BalanceSettings, force: boolean): Promise<ProgressItem | undefined> {
 		const currency = toCurrency(settings.currency);
-		const session = settings.mode === "session";
-		if (session && settings.sessionStart === undefined) {
-			// Nothing to show until a session is started.
-			return undefined;
+
+		// Starting point of the gains, if the key shows gains.
+		let start: { amount: number; at: number } | undefined;
+		if (settings.mode === "session") {
+			if (settings.sessionStart === undefined) return undefined;
+			start = { amount: settings.sessionStart, at: settings.sessionStartedAt ?? 0 };
+		} else if (settings.mode === "game") {
+			const session = (await getGlobalSettings()).gameSession;
+			if (!session) return undefined;
+			start = { amount: session[currency], at: session.startedAt };
 		}
 
 		const balance = await getBalance(force);
@@ -63,13 +80,13 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 			id: currency,
 			name: CURRENCY_LABELS[currency],
 			description: "",
-			badge: session ? formatClock(settings.sessionStartedAt) : undefined,
+			badge: start ? formatClock(start.at) : undefined,
 			current: amount,
 			target: isDoubloons ? balance.doubloonsLimit : 0,
 			completed: false,
 			icon: currencyIcon(currency),
-			valueText: session ? formatSigned(amount - settings.sessionStart!) : formatAmount(amount),
-			noBar: session || !isDoubloons,
+			valueText: start ? formatSigned(amount - start.amount) : formatAmount(amount),
+			noBar: start !== undefined || !isDoubloons,
 		};
 	}
 
