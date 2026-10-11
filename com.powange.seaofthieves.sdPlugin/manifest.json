@@ -69,6 +69,22 @@
 			]
 		},
 		{
+			"Name": "In-game Time",
+			"UUID": "com.powange.seaofthieves.game-clock",
+			"Icon": "imgs/actions/game-clock/icon",
+			"Tooltip": "In-game time, period of the day and day of the 30-day cycle, computed from the real time.",
+			"PropertyInspectorPath": "ui/game-clock.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/game-clock/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Session Counter",
 			"UUID": "com.powange.seaofthieves.counter",
 			"Icon": "imgs/actions/counter/icon",

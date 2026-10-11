@@ -5,6 +5,7 @@ import { CommendationProgress } from "./actions/commendation";
 import { CookingTimer } from "./actions/cooking-timer";
 import { SeasonProgressAction } from "./actions/season";
 import { FactionLevelProgress } from "./actions/faction-level";
+import { GameClock } from "./actions/game-clock";
 import { GameTimer } from "./actions/game-timer";
 import { SessionCounter } from "./actions/session-counter";
 import { StormTracker } from "./actions/storm";
@@ -23,6 +24,7 @@ streamDeck.actions.registerAction(new FactionLevelProgress());
 streamDeck.actions.registerAction(new BalanceProgress());
 streamDeck.actions.registerAction(new SeasonProgressAction());
 streamDeck.actions.registerAction(new StormTracker());
+streamDeck.actions.registerAction(new GameClock());
 streamDeck.actions.registerAction(new XboxAchievementProgress());
 
 watchGameSessions();

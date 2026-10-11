@@ -40,5 +40,9 @@
 	"com.powange.seaofthieves.storm": {
 		"Name": "Tempête",
 		"Tooltip": "Suivi de la tempête (prévisions Merfolk's Lullaby) : île actuelle ou l'une des cinq suivantes, et quand. Appuie pour actualiser."
+	},
+	"com.powange.seaofthieves.game-clock": {
+		"Name": "Heure en jeu",
+		"Tooltip": "Heure en jeu, moment de la journée et jour du cycle de 30 jours, calculés à partir de l'heure réelle."
 	}
 }
