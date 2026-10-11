@@ -2,6 +2,7 @@ import streamDeck, { action, type SendToPluginEvent } from "@elgato/streamdeck";
 import type { JsonValue } from "@elgato/utils";
 
 import { type ProgressItem } from "../api/progress";
+import { loadBundledImage } from "../bundled-images";
 import { clearProfile, type FactionLevel, getFactionLevels } from "../api/sot";
 import { onGlobalSettingsChanged } from "../global-settings";
 import { factionIcon } from "../progress-icons";
@@ -32,7 +33,10 @@ export class FactionLevelProgress extends ProgressAction<ProgressSettings> {
 	protected override async fetchItem(settings: ProgressSettings, force: boolean): Promise<ProgressItem | undefined> {
 		if (!settings.itemId) return undefined;
 		const faction = (await getFactionLevels(force)).find((f) => f.key === settings.itemId);
-		return faction && toItem(faction);
+		if (!faction) return undefined;
+		// Official faction icons (from the Sea of Thieves wiki); guilds keep the drawn flag.
+		const imageData = !faction.isGuild && /^[A-Za-z]+$/.test(faction.key) ? await loadBundledImage(`factions/${faction.key}.png`) : undefined;
+		return { ...toItem(faction), imageData };
 	}
 
 	override async onSendToPlugin(ev: SendToPluginEvent<JsonValue, ProgressSettings>): Promise<void> {

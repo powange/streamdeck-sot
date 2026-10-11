@@ -82,5 +82,5 @@ Temps depuis la pose sur le feu (cuit / brûlé), valeur « cuit » la plus prud
 
 ## Mentions
 
-Plugin non officiel, gratuit, créé par un fan. Les icônes des monnaies proviennent du site seaofthieves.com.
+Plugin non officiel, gratuit, créé par un fan. Les icônes des monnaies proviennent du site seaofthieves.com, celles des factions du [wiki Sea of Thieves](https://seaofthieves.wiki.gg/wiki/Trading_Companies).
 Sea of Thieves © Microsoft Corporation. Ce plugin a été créé dans le cadre des [règles d'utilisation du contenu de jeu de Microsoft](https://www.xbox.com/fr-FR/developers/rules) à l'aide de ressources de Sea of Thieves ; il n'est ni approuvé par Microsoft ni affilié à Microsoft.

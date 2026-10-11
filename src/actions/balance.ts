@@ -1,8 +1,7 @@
 import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, type KeyUpEvent } from "@elgato/streamdeck";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 
 import { type ProgressItem } from "../api/progress";
+import { loadBundledImage } from "../bundled-images";
 import { clearProfile, getBalance } from "../api/sot";
 import { getGlobalSettings, onGlobalSettingsChanged } from "../global-settings";
 import { type Currency, currencyIcon } from "../progress-icons";
@@ -94,7 +93,7 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 			target: isDoubloons ? balance.doubloonsLimit : 0,
 			completed: false,
 			icon: currencyIcon(currency),
-			imageData: await loadCurrencyImage(currency),
+			imageData: await loadBundledImage(`currencies/${CURRENCY_IMAGES[currency]}`),
 			valueText: start ? formatSigned(amount - start.amount) : formatAmount(amount),
 			noBar: start !== undefined || !isDoubloons,
 		};
@@ -159,23 +158,6 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 			if (action.isKey()) await action.showAlert();
 		}
 	}
-}
-
-const currencyImages = new Map<Currency, Promise<string | undefined>>();
-
-/**
- * Reads the bundled currency icon as a data URL, or `undefined` (the drawn icon is used instead) if it is missing.
- */
-function loadCurrencyImage(currency: Currency): Promise<string | undefined> {
-	let image = currencyImages.get(currency);
-	if (!image) {
-		// The plugin runs from its .sdPlugin folder.
-		image = readFile(path.resolve("imgs", "currencies", CURRENCY_IMAGES[currency]))
-			.then((data) => `data:image/png;base64,${data.toString("base64")}`)
-			.catch(() => undefined);
-		currencyImages.set(currency, image);
-	}
-	return image;
 }
 
 function toCurrency(value: string | undefined): Currency {
