@@ -4,7 +4,8 @@
 export const KEY_SIZE = 144;
 
 export const COLORS = {
-	sea: "#0d1f2a",
+	/** Pure black, to blend with the deep black of the Stream Deck screens. */
+	background: "#000000",
 	track: "#24343e",
 	text: "#f4ecd8",
 	muted: "#9fb3bf",
@@ -29,7 +30,7 @@ export function toDataUrl(svg: string): string {
 /**
  * Wraps key content into a full 144×144 SVG document with a solid background.
  */
-export function keySvg(content: string, background: string = COLORS.sea): string {
+export function keySvg(content: string, background: string = COLORS.background): string {
 	return (
 		`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${KEY_SIZE}" height="${KEY_SIZE}" viewBox="0 0 ${KEY_SIZE} ${KEY_SIZE}">` +
 		`<rect width="${KEY_SIZE}" height="${KEY_SIZE}" fill="${background}"/>` +

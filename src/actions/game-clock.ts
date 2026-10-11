@@ -24,7 +24,6 @@ const LONG_PRESS_MS = 600;
 /** State of the day counter shown on a key. */
 type CounterState = { day: number; stopped: boolean };
 
-const NIGHT_BACKGROUND = "#07121a";
 
 /** The clock border runs along the edge of the key, this far inside it, with rounded corners like the keys. */
 const BORDER_INSET = 7;
@@ -203,7 +202,6 @@ export class GameClock extends SingletonAction<ClockSettings> {
  * counted day instead of the day of the game cycle.
  */
 export function renderClockKey(time: GameTime, style: KeyStyle = {}, counter?: CounterState): string {
-	const night = time.period === "night";
 	const key = composeKey(
 		{
 			visual:
@@ -213,7 +211,6 @@ export function renderClockKey(time: GameTime, style: KeyStyle = {}, counter?: C
 				text(72, 98, `${time.hours}:${String(time.minutes).padStart(2, "0")}`, 32) +
 				text(72, 120, style.title ?? (counter?.stopped ? "Fin de session" : PERIOD_LABELS[time.period]), 13, COLORS.muted, "normal"),
 			split: 66,
-			background: night ? NIGHT_BACKGROUND : COLORS.sea,
 		},
 		style,
 	);

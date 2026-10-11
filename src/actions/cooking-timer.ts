@@ -209,7 +209,7 @@ export function renderCookingKey(food: Food, elapsed: number | undefined, style:
 						text(72, 120, status, 15, warning ? COLORS.danger : COLORS.cooked),
 					bar: progressBar(remaining / (food.burnSeconds - food.cookSeconds), warning ? COLORS.danger : COLORS.cooked),
 					split: 66,
-					background: flash ? "#4a1410" : COLORS.sea,
+					background: flash ? "#4a1410" : COLORS.background,
 				},
 				style,
 			);
