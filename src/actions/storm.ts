@@ -14,6 +14,9 @@ const MIN_FORECAST_AHEAD_MS = 20 * 60_000;
 /** Furthest island that can be shown: the 5th one after the current island. */
 const MAX_OFFSET = 5;
 
+/** Next island, the default choice of the property inspector. */
+const DEFAULT_OFFSET = 1;
+
 type StormSettings = ProgressSettings & {
 	/** Island to show: 0 = the island under the storm now, 1 = the next one... up to 5. */
 	offset?: number | string;
@@ -66,7 +69,7 @@ export class StormTracker extends ProgressAction<StormSettings> {
 			}
 		}
 
-		const offset = Math.min(MAX_OFFSET, Math.max(0, Math.round(Number(settings.offset) || 0)));
+		const offset = toOffset(settings.offset);
 		const target = route[offset];
 		const badge = offset > 0 ? `+${offset}` : undefined;
 		if (!target) {
@@ -99,6 +102,15 @@ export class StormTracker extends ProgressAction<StormSettings> {
 			noBar: true,
 		};
 	}
+}
+
+/**
+ * Island offset from the settings. Until the setting is changed it is not stored, so default to the next island, as the
+ * property inspector shows.
+ */
+function toOffset(value: number | string | undefined): number {
+	const offset = value === undefined || value === "" ? DEFAULT_OFFSET : Number(value);
+	return Number.isFinite(offset) ? Math.min(MAX_OFFSET, Math.max(0, Math.round(offset))) : DEFAULT_OFFSET;
 }
 
 /** Last forecast position already reached, or the first one. */
