@@ -10,7 +10,7 @@ import {
 } from "@elgato/streamdeck";
 
 import { COUNTER_LABELS, counterIcon, type CounterKind, isCounterKind } from "../counter-icons";
-import { cleanTitle, COLORS, composeKey, type KeyStyle, place, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, fitText, type KeyStyle, place, text, toDataUrl, truncate } from "../svg";
 
 /** How long the key must be held to reset the counter. */
 const LONG_PRESS_MS = 600;
@@ -86,7 +86,7 @@ export function renderCounterKey(settings: CounterSettings, style: KeyStyle = {}
 	return composeKey(
 		{
 			visual: place(counterIcon(kind), 72, 38),
-			info: text(72, 104, String(count), 40) + text(72, 130, label, 16, COLORS.muted, "normal"),
+			info: fitText(72, 104, String(count), 42) + text(72, 131, truncate(label, 18), 18, COLORS.muted, "normal"),
 			split: 66,
 		},
 		style,

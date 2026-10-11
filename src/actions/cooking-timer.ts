@@ -12,7 +12,7 @@ import {
 import { foodIcon } from "../food-icons";
 import { type Food, getFood } from "../foods";
 import { playSound, type SoundSettings } from "../sound";
-import { cleanTitle, COLORS, composeKey, type KeyStyle, place, progressBar, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, fitText, type KeyStyle, place, progressBar, text, toDataUrl, truncate } from "../svg";
 
 /** How often running timers are redrawn. */
 const TICK_MS = 250;
@@ -177,7 +177,7 @@ export function renderCookingKey(food: Food, elapsed: number | undefined, style:
 			return composeKey(
 				{
 					visual: place(foodIcon(food.id, "raw"), 72, 50, 1.25),
-					info: text(72, 106, style.title ?? food.label, 22) + text(72, 130, formatDuration(food.cookSeconds), 16, COLORS.muted, "normal"),
+					info: fitText(72, 106, style.title ?? food.label, 24) + text(72, 131, formatDuration(food.cookSeconds), 18, COLORS.muted, "normal"),
 					split: 84,
 				},
 				style,
@@ -188,7 +188,7 @@ export function renderCookingKey(food: Food, elapsed: number | undefined, style:
 			return composeKey(
 				{
 					visual: place(foodIcon(food.id, "raw"), 72, 40),
-					info: text(72, 98, formatDuration(remaining), 34) + text(72, 120, style.title ?? "CUISSON", 15, COLORS.cooking),
+					info: fitText(72, 98, formatDuration(remaining), 34) + text(72, 121, truncate(style.title ?? "CUISSON", 17, undefined, true), 17, COLORS.cooking),
 					bar: progressBar(elapsed! / food.cookSeconds, COLORS.cooking),
 					split: 66,
 				},
@@ -205,8 +205,8 @@ export function renderCookingKey(food: Food, elapsed: number | undefined, style:
 				{
 					visual: place(foodIcon(food.id, "cooked"), 72, 40),
 					info:
-						text(72, 98, formatDuration(remaining), 34, warning ? COLORS.danger : COLORS.text) +
-						text(72, 120, status, 15, warning ? COLORS.danger : COLORS.cooked),
+						fitText(72, 98, formatDuration(remaining), 34, warning ? COLORS.danger : COLORS.text) +
+						text(72, 121, truncate(status, 17, undefined, true), 17, warning ? COLORS.danger : COLORS.cooked),
 					bar: progressBar(remaining / (food.burnSeconds - food.cookSeconds), warning ? COLORS.danger : COLORS.cooked),
 					split: 66,
 					background: flash ? "#4a1410" : COLORS.background,
@@ -219,7 +219,7 @@ export function renderCookingKey(food: Food, elapsed: number | undefined, style:
 			return composeKey(
 				{
 					visual: place(foodIcon(food.id, "burnt"), 72, 50, 1.25),
-					info: text(72, 112, "BRÛLÉ", 24, COLORS.danger) + (style.title ? text(72, 134, style.title, 14, COLORS.muted, "normal") : ""),
+					info: text(72, 112, "BRÛLÉ", 26, COLORS.danger) + (style.title ? text(72, 134, truncate(style.title, 16), 16, COLORS.muted, "normal") : ""),
 					split: 86,
 					background: COLORS.burnt,
 				},

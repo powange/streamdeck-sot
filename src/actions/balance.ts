@@ -18,12 +18,6 @@ const CURRENCY_IMAGES: Record<Currency, string> = {
 	ancientCoins: "ancient-coins.png",
 };
 
-const CURRENCY_LABELS: Record<Currency, string> = {
-	gold: "Or",
-	doubloons: "Doublons",
-	ancientCoins: "Pièces anciennes",
-};
-
 type BalanceSettings = ProgressSettings & {
 	currency?: string;
 	/** "total" (default), "session" (gains since a session started with a long press) or "game" (gains since the
@@ -91,7 +85,8 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 
 		return {
 			id: currency,
-			name: CURRENCY_LABELS[currency],
+			// The currency icon is enough: no name, so the amount stands out.
+			name: "",
 			description: "",
 			badge: start ? formatClock(start.at) : undefined,
 			current: amount,

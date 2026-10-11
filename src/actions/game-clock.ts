@@ -13,7 +13,7 @@ import {
 import { counterDay, getDayCounter, resetDayCounter, startDayCounter, stopCountersForGame } from "../day-counter";
 import { onGameClosed } from "../game-session";
 import { type GameTime, getGameTime, PERIOD_COLORS, PERIOD_LABELS, periodIcon, periodRanges } from "../game-clock";
-import { cleanTitle, COLORS, composeKey, KEY_SIZE, type KeyStyle, place, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, KEY_SIZE, type KeyStyle, place, text, toDataUrl, truncate } from "../svg";
 
 /** One real second is one in-game minute. */
 const TICK_MS = 1000;
@@ -209,7 +209,7 @@ export function renderClockKey(time: GameTime, style: KeyStyle = {}, counter?: C
 				(counter ? dayBadge(counter.day, counter.stopped ? "stopped" : "counting") : dayBadge(time.day, "cycle")),
 			info:
 				text(72, 98, `${time.hours}:${String(time.minutes).padStart(2, "0")}`, 32) +
-				text(72, 120, style.title ?? (counter?.stopped ? "Fin de session" : PERIOD_LABELS[time.period]), 13, COLORS.muted, "normal"),
+				text(72, 121, truncate(style.title ?? (counter?.stopped ? "Fin de session" : PERIOD_LABELS[time.period]), 16, 112), 16, COLORS.muted, "normal"),
 			split: 66,
 		},
 		style,

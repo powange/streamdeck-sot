@@ -6,9 +6,10 @@ export const KEY_SIZE = 144;
 export const COLORS = {
 	/** Pure black, to blend with the deep black of the Stream Deck screens. */
 	background: "#000000",
-	track: "#24343e",
+	/** Empty part of progress bars, light enough to stay visible on black. */
+	track: "#34464f",
 	text: "#f4ecd8",
-	muted: "#9fb3bf",
+	muted: "#b4c4cc",
 	teal: "#3fa7b5",
 	cooking: "#f0a030",
 	cooked: "#46c063",
@@ -54,28 +55,76 @@ export function text(
 	);
 }
 
-/**
- * Splits a text into at most `maxLines` lines of about `maxChars` characters, adding an ellipsis when truncated.
- */
-export function wrapLines(value: string, maxChars: number, maxLines: number): string[] {
-	const lines: string[] = [];
-	let line = "";
-	for (const word of value.split(/\s+/).filter(Boolean)) {
-		const candidate = line ? `${line} ${word}` : word;
-		if (candidate.length <= maxChars || !line) {
-			line = candidate;
-			continue;
-		}
-		lines.push(line);
-		line = word;
-	}
-	if (line) lines.push(line);
+/** Average width of an Arial bold glyph, in em, used to fit texts in the key. */
+const CHAR_WIDTH = 0.58;
 
-	if (lines.length > maxLines) {
-		lines.length = maxLines;
-		lines[maxLines - 1] = `${lines[maxLines - 1].slice(0, maxChars - 1).trimEnd()}…`;
-	}
-	return lines.map((l) => (l.length > maxChars ? `${l.slice(0, maxChars - 1)}…` : l));
+/** Same for regular (non-bold) text, which is narrower. */
+const CHAR_WIDTH_REGULAR = 0.5;
+
+/** Usable width of the key for texts. */
+const TEXT_WIDTH = 128;
+
+/** Smallest font size used on keys: smaller texts are unreadable on the device. */
+export const MIN_FONT_SIZE = 16;
+
+/**
+ * Standard key grid: picture on top, main value in the middle, short label below, progress bar at the bottom.
+ */
+export const GRID = {
+	/** Centre of icons drawn around (0, 0). */
+	iconY: 36,
+	/** Top and size of raster pictures. */
+	pictureY: 8,
+	pictureSize: 54,
+	valueY: 98,
+	valueSize: 30,
+	labelY: 121,
+	labelSize: 16,
+	/** Boundary between the picture and the texts, for the "text on top" layout. */
+	split: 66,
+} as const;
+
+/**
+ * Largest font size (up to `maxSize`) at which a text fits the width of the key.
+ */
+export function fitSize(value: string, maxSize: number, maxWidth = TEXT_WIDTH): number {
+	const fitting = Math.floor(maxWidth / (Math.max(1, value.length) * CHAR_WIDTH));
+	return Math.max(MIN_FONT_SIZE - 2, Math.min(maxSize, fitting));
+}
+
+/**
+ * Text shrunk if needed to fit the width of the key.
+ */
+export function fitText(x: number, y: number, value: string, maxSize: number, color: string = COLORS.text, weight = "bold"): string {
+	return text(x, y, value, fitSize(value, maxSize), color, weight);
+}
+
+/**
+ * Cuts a text with an ellipsis so that it fits the width of the key at the given size.
+ */
+export function truncate(value: string, size: number, maxWidth = TEXT_WIDTH, bold = false): string {
+	const maxChars = Math.floor(maxWidth / (size * (bold ? CHAR_WIDTH : CHAR_WIDTH_REGULAR)));
+	return value.length > maxChars ? `${value.slice(0, maxChars - 1).trimEnd()}…` : value;
+}
+
+/**
+ * Short label in the standard label slot, at the minimum readable size.
+ */
+export function label(value: string, color: string = COLORS.muted, y: number = GRID.labelY): string {
+	return text(72, y, truncate(value, GRID.labelSize), GRID.labelSize, color, "normal");
+}
+
+/**
+ * Badge in a rounded pill, right-aligned on `right` (top-right corner of the key by default).
+ */
+export function pill(value: string, right = KEY_SIZE - 6, top = 4, fill: string = COLORS.gold, color: string = COLORS.ink): string {
+	const size = 15;
+	const width = value.length * size * CHAR_WIDTH + 12;
+	const x = right - width;
+	return (
+		`<rect x="${x.toFixed(1)}" y="${top}" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${fill}"/>` +
+		text(x + width / 2, top + 16, value, size, color)
+	);
 }
 
 /**
@@ -101,7 +150,7 @@ export type KeyStyle = {
 };
 
 /** Top of the progress bar; content above it is swapped when the text goes on top. */
-const BAR_TOP = 126;
+const BAR_TOP = 128;
 
 /**
  * Builds a key from its parts. Normally `visual` (icon / picture) sits above `split` and `info` (texts) below it; with
@@ -133,11 +182,11 @@ export function cleanTitle(title: string | undefined): string | undefined {
  * Draws a horizontal progress bar along the bottom of the key.
  */
 export function progressBar(ratio: number, color: string): string {
-	const x = 14;
+	const x = 12;
 	const width = KEY_SIZE - x * 2;
 	const filled = Math.max(0, Math.min(1, ratio)) * width;
 	return (
-		`<rect x="${x}" y="130" width="${width}" height="8" rx="4" fill="${COLORS.track}"/>` +
-		`<rect x="${x}" y="130" width="${filled.toFixed(1)}" height="8" rx="4" fill="${color}"/>`
+		`<rect x="${x}" y="${BAR_TOP}" width="${width}" height="10" rx="5" fill="${COLORS.track}"/>` +
+		`<rect x="${x}" y="${BAR_TOP}" width="${filled.toFixed(1)}" height="10" rx="5" fill="${color}"/>`
 	);
 }

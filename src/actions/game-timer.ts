@@ -11,7 +11,7 @@ import {
 } from "@elgato/streamdeck";
 
 import { playSound, type SoundSettings } from "../sound";
-import { cleanTitle, COLORS, composeKey, type KeyStyle, place, progressBar, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, fitText, type KeyStyle, pill, place, progressBar, text, toDataUrl, truncate } from "../svg";
 import { getTimerPreset, type TimerPreset, timerIcon } from "../timer-presets";
 
 /** How often running timers are redrawn. */
@@ -242,14 +242,14 @@ export function renderTimerKey(settings: TimerSettings, now: number, style: KeyS
 	const name = label(settings, style);
 	const icon = timerIcon(preset(settings).id);
 	// Number of completed cycles of a repeating timer, in the top-right corner.
-	const cycles = settings.cycles ? text(138, 18, `×${settings.cycles}`, 15, COLORS.gold, "bold", "end") : "";
+	const cycles = settings.cycles ? pill(`×${settings.cycles}`) : "";
 
 	switch (getPhase(settings, now)) {
 		case "idle":
 			return composeKey(
 				{
 					visual: place(icon, 72, 48, 1.15) + cycles,
-					info: text(72, 106, name, 20) + text(72, 130, formatDuration(total), 16, COLORS.muted, "normal"),
+					info: fitText(72, 106, name, 22) + text(72, 131, formatDuration(total), 18, COLORS.muted, "normal"),
 					split: 84,
 				},
 				style,
@@ -261,7 +261,7 @@ export function renderTimerKey(settings: TimerSettings, now: number, style: KeyS
 			return composeKey(
 				{
 					visual: place(icon, 72, 40, 0.9) + cycles,
-					info: text(72, 98, formatDuration(remaining), 30, warning ? COLORS.cooking : COLORS.text) + text(72, 120, name, 15, COLORS.teal),
+					info: fitText(72, 98, formatDuration(remaining), 32, warning ? COLORS.cooking : COLORS.text) + text(72, 121, truncate(name, 17, undefined, true), 17, COLORS.teal),
 					bar: progressBar(1 - remaining / total, warning ? COLORS.cooking : COLORS.teal),
 					split: 66,
 				},
@@ -274,7 +274,7 @@ export function renderTimerKey(settings: TimerSettings, now: number, style: KeyS
 			return composeKey(
 				{
 					visual: place(icon, 72, 40, 0.9) + cycles,
-					info: text(72, 98, formatDuration(remaining), 30, COLORS.muted) + text(72, 120, style.title ?? "PAUSE", 15, COLORS.gold),
+					info: fitText(72, 98, formatDuration(remaining), 32, COLORS.muted) + text(72, 121, truncate(style.title ?? "PAUSE", 17, undefined, true), 17, COLORS.gold),
 					bar: progressBar(1 - remaining / total, COLORS.muted),
 					split: 66,
 				},
@@ -288,7 +288,7 @@ export function renderTimerKey(settings: TimerSettings, now: number, style: KeyS
 			return composeKey(
 				{
 					visual: place(icon, 72, 40, 0.9) + cycles,
-					info: text(72, 98, `-${formatDuration(overtime / 1000, Math.floor)}`, 30, COLORS.danger) + text(72, 120, name, 15, COLORS.danger),
+					info: fitText(72, 98, `-${formatDuration(overtime / 1000, Math.floor)}`, 32, COLORS.danger) + text(72, 121, truncate(name, 17, undefined, true), 17, COLORS.danger),
 					bar: progressBar(1, COLORS.danger),
 					split: 66,
 					background: flash ? "#4a1410" : "#2a0f0c",

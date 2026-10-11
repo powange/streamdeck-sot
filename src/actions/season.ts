@@ -42,7 +42,7 @@ export class SeasonProgressAction extends ProgressAction<ProgressSettings> {
 			current: season.level,
 			target: season.maxLevel,
 			completed: season.level >= season.maxLevel,
-			valueText: `Niv. ${season.level} / ${season.maxLevel}`,
+			valueText: `${season.level} / ${season.maxLevel}`,
 		};
 	}
 }

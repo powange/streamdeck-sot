@@ -10,7 +10,7 @@ import streamDeck, {
 import type { JsonObject } from "@elgato/utils";
 
 import { ApiError, type ProgressItem } from "../api/progress";
-import { cleanTitle, COLORS, composeKey, image, type KeyStyle, place, progressBar, text, toDataUrl, wrapLines } from "../svg";
+import { cleanTitle, COLORS, composeKey, fitText, GRID, image, type KeyStyle, label, pill, place, progressBar, text, toDataUrl } from "../svg";
 
 export type ProgressSettings = JsonObject & {
 	itemId?: string;
@@ -209,23 +209,21 @@ function loadImage(url: string): Promise<string | undefined> {
 }
 
 /**
- * Draws a progress key: image, name on two lines (or the Stream Deck title), value and progress bar.
+ * Draws a progress key on the standard grid: picture (and badge) on top, the value in large, the name (or the Stream
+ * Deck title) as a short label, and the progress bar.
  */
 export function renderProgressKey(item: ProgressItem, picture: string | undefined, fallbackIcon: string, style: KeyStyle = {}): string {
-	const lines = wrapLines(style.title ?? item.name, 16, 2);
+	const name = style.title ?? item.name;
 	const ratio = item.target > 0 ? item.current / item.target : item.completed ? 1 : 0;
 	const color = item.completed ? COLORS.cooked : COLORS.teal;
+	const value = item.valueText ?? (item.completed ? "Terminé" : `${compact(item.current)} / ${compact(item.target)}`);
 
 	return composeKey(
 		{
-			visual:
-				(picture ? image(picture, 44, 4, 56) : place(item.icon ?? fallbackIcon, 72, 34)) +
-				(item.badge ? text(138, 18, item.badge, 14, COLORS.gold, "bold", "end") : ""),
-			info:
-				lines.map((line, i) => text(72, (lines.length === 1 ? 84 : 76) + i * 16, line, 14)).join("") +
-				text(72, 121, item.valueText ?? (item.completed ? "TERMINÉ" : `${compact(item.current)} / ${compact(item.target)}`), 16, item.completed ? COLORS.cooked : COLORS.text),
+			visual: keyPicture(picture, item.icon ?? fallbackIcon) + (item.badge ? pill(item.badge) : ""),
+			info: fitText(72, GRID.valueY, value, GRID.valueSize, item.completed ? COLORS.cooked : COLORS.text) + (name ? label(name) : ""),
 			bar: item.noBar ? undefined : progressBar(ratio, color),
-			split: 62,
+			split: GRID.split,
 		},
 		style,
 	);
@@ -234,12 +232,17 @@ export function renderProgressKey(item: ProgressItem, picture: string | undefine
 export function renderMessageKey(icon: string, line1: string, line2: string, style: KeyStyle = {}, picture?: string): string {
 	return composeKey(
 		{
-			visual: picture ? image(picture, 46, 10, 52) : place(icon, 72, 40),
-			info: text(72, 98, line1, 16) + text(72, 120, line2, 16, COLORS.muted, "normal"),
-			split: 66,
+			visual: keyPicture(picture, icon),
+			info: fitText(72, GRID.valueY, line1, 20) + label(line2),
+			split: GRID.split,
 		},
 		style,
 	);
+}
+
+/** Raster picture, or drawn icon, in the picture slot of the grid. */
+function keyPicture(picture: string | undefined, icon: string): string {
+	return picture ? image(picture, (144 - GRID.pictureSize) / 2, GRID.pictureY, GRID.pictureSize) : place(icon, 72, GRID.iconY);
 }
 
 function compact(value: number): string {

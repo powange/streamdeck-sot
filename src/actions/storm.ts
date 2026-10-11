@@ -82,7 +82,7 @@ export class StormTracker extends ProgressAction<StormSettings> {
 				current: 0,
 				target: 0,
 				completed: false,
-				valueText: "hors prévision",
+				valueText: "Hors prévision",
 				noBar: true,
 			};
 		}
@@ -98,7 +98,7 @@ export class StormTracker extends ProgressAction<StormSettings> {
 			current: 0,
 			target: 0,
 			completed: false,
-			valueText: offset === 0 ? "maintenant" : minutes <= 1 ? "dans 1 min" : `dans ${minutes} min`,
+			valueText: offset === 0 ? "Maintenant" : `${Math.max(1, minutes)} min`,
 			noBar: true,
 		};
 	}

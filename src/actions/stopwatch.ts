@@ -10,7 +10,7 @@ import {
 	type WillDisappearEvent,
 } from "@elgato/streamdeck";
 
-import { cleanTitle, COLORS, composeKey, type KeyStyle, place, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, fitText, type KeyStyle, place, text, toDataUrl, truncate } from "../svg";
 import { stopwatchIcon } from "../timer-presets";
 
 /** How often running stopwatches are redrawn. */
@@ -155,7 +155,7 @@ export function renderStopwatchKey(settings: StopwatchSettings, now: number, sty
 			return composeKey(
 				{
 					visual: place(stopwatchIcon(), 72, 46, 1.1),
-					info: text(72, 106, name, 20) + text(72, 130, "0:00", 16, COLORS.muted, "normal"),
+					info: fitText(72, 106, name, 22) + text(72, 131, "0:00", 18, COLORS.muted, "normal"),
 					split: 82,
 				},
 				style,
@@ -165,7 +165,7 @@ export function renderStopwatchKey(settings: StopwatchSettings, now: number, sty
 			return composeKey(
 				{
 					visual: place(stopwatchIcon(), 72, 40, 0.9),
-					info: text(72, 100, formatElapsed(now - settings.startedAt!), 30) + text(72, 126, name, 15, COLORS.teal),
+					info: fitText(72, 100, formatElapsed(now - settings.startedAt!), 32) + text(72, 126, truncate(name, 17, undefined, true), 17, COLORS.teal),
 					split: 68,
 				},
 				style,
@@ -175,7 +175,7 @@ export function renderStopwatchKey(settings: StopwatchSettings, now: number, sty
 			return composeKey(
 				{
 					visual: place(stopwatchIcon(), 72, 40, 0.9),
-					info: text(72, 100, formatElapsed(settings.elapsedMs!), 30, COLORS.muted) + text(72, 126, style.title ?? "PAUSE", 15, COLORS.gold),
+					info: fitText(72, 100, formatElapsed(settings.elapsedMs!), 32, COLORS.muted) + text(72, 126, truncate(style.title ?? "PAUSE", 17, undefined, true), 17, COLORS.gold),
 					split: 68,
 				},
 				style,

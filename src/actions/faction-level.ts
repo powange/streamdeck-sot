@@ -56,7 +56,7 @@ function toItem(faction: FactionLevel): ProgressItem {
 		target: 100,
 		completed: false,
 		icon: factionIcon(faction.key, faction.isGuild),
-		valueText: `Niv. ${faction.level}`,
+		valueText: String(faction.level),
 	};
 }
 
