@@ -89,3 +89,23 @@ export function currencyIcon(currency: Currency): string {
 			);
 	}
 }
+
+/**
+ * Ship's wheel, for the season renown. Centred on (0, 0), ~56 units wide.
+ */
+export function seasonIcon(): string {
+	const spokes = Array.from({ length: 8 }, (_, i) => {
+		const a = (i * Math.PI) / 4;
+		const x = (r: number) => (Math.cos(a) * r).toFixed(1);
+		const y = (r: number) => (Math.sin(a) * r).toFixed(1);
+		return (
+			`<path d="M${x(6)},${y(6)} L${x(27)},${y(27)}" stroke="#8a5a2b" stroke-width="4" stroke-linecap="round"/>` +
+			`<circle cx="${x(28)}" cy="${y(28)}" r="3.5" fill="#a8703a"/>`
+		);
+	}).join("");
+	return (
+		spokes +
+		`<circle cx="0" cy="0" r="19" fill="none" stroke="#a8703a" stroke-width="5"/>` +
+		`<circle cx="0" cy="0" r="7" fill="${COLORS.gold}" stroke="#9c7414" stroke-width="2"/>`
+	);
+}

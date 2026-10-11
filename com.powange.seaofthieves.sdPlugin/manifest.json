@@ -117,6 +117,22 @@
 			]
 		},
 		{
+			"Name": "Season",
+			"UUID": "com.powange.seaofthieves.season",
+			"Icon": "imgs/actions/season/icon",
+			"Tooltip": "Shows your renown level in the current season from your seaofthieves.com profile. Press to refresh.",
+			"PropertyInspectorPath": "ui/season.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/season/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Xbox Achievement",
 			"UUID": "com.powange.seaofthieves.xbox-achievement",
 			"Icon": "imgs/actions/xbox-achievement/icon",

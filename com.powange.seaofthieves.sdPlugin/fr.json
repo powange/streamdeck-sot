@@ -32,5 +32,9 @@
 	"com.powange.seaofthieves.balance": {
 		"Name": "Bourse",
 		"Tooltip": "Affiche ton or, tes doublons ou tes pièces anciennes (total ou gains de la session). Appuie pour actualiser."
+	},
+	"com.powange.seaofthieves.season": {
+		"Name": "Saison",
+		"Tooltip": "Affiche ton niveau de renommée dans la saison en cours. Appuie pour actualiser."
 	}
 }

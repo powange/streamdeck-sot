@@ -20,6 +20,7 @@ Prérequis : Stream Deck 7.1 ou plus récent, sous Windows.
 - **Commendation** : affiche la progression d'une commendation de ton profil pirate [seaofthieves.com](https://www.seaofthieves.com/profile/reputation) (grade, valeur / seuil, image). Choix en cascade : faction → campagne → commendation. Appuie pour actualiser.
 - **Niveau de faction** : niveau d'une compagnie, d'une faction (Gardiens de la fortune, Serviteurs de la flamme) ou d'une guilde, avec la distinction et la progression vers le niveau suivant. Même token RAT que les commendations.
 - **Bourse** : or, doublons (avec le plafond) ou pièces anciennes du profil. En mode « Gains de la session », un appui long démarre une session et le bouton affiche le gain depuis ce moment (+184 250), avec l'heure de départ. En mode « Gains depuis le lancement du jeu », la session redémarre automatiquement à chaque lancement de Sea of Thieves (`SoTGame.exe`), pour tous les boutons Bourse à la fois.
+- **Saison** : niveau de renommée atteint dans la saison en cours (sur 50), avec les jours restants avant la fin de la saison.
 - **Succès Xbox** : affiche la progression d'un succès Xbox de Sea of Thieves via [OpenXBL](https://xbl.io). Appuie pour actualiser.
 
 ### Titre et disposition

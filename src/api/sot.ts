@@ -102,6 +102,7 @@ export async function getFactionLevels(force = false): Promise<FactionLevel[]> {
 export function clearProfile(): void {
 	reputation.clear();
 	balance.clear();
+	seasons.clear();
 }
 
 async function loadReputation(): Promise<Reputation> {
@@ -129,6 +130,55 @@ async function loadBalance(): Promise<Balance> {
 		doubloons: toNumber(json.doubloons),
 		doubloonsLimit: toNumber(json.doubloonsLimit),
 		ancientCoins: toNumber(json.ancientCoins),
+	};
+}
+
+/**
+ * Progress in a season (renown levels of the season / Plunder Pass).
+ */
+export type SeasonProgress = {
+	title: string;
+	/** Renown level reached. */
+	level: number;
+	maxLevel: number;
+	/** Tier reached (5 levels per tier). */
+	tier: number;
+	/** End of the season (ms timestamp), if known. */
+	endsAt?: number;
+};
+
+type Season = {
+	IsActive?: boolean;
+	Title?: string;
+	ActiveUntil?: string;
+	LevelProgress?: number;
+	Tier?: number;
+	Levels?: unknown[];
+};
+
+const seasons = new CachedLoader(loadSeason, 5 * 60_000, 10_000);
+
+export function getSeasonProgress(force = false): Promise<SeasonProgress | undefined> {
+	return seasons.get(force);
+}
+
+async function loadSeason(): Promise<SeasonProgress | undefined> {
+	return parseSeason(await fetchProfile<Season[]>("seasons-progress"));
+}
+
+/**
+ * Picks the active season (or the latest one) of the seasons-progress response.
+ */
+export function parseSeason(json: Season[]): SeasonProgress | undefined {
+	if (!Array.isArray(json) || json.length === 0) return undefined;
+	const season = json.find((s) => s.IsActive) ?? json[json.length - 1];
+	const endsAt = season.ActiveUntil ? Date.parse(season.ActiveUntil) : NaN;
+	return {
+		title: (season.Title ?? "Saison").replace(/\s+/g, " "),
+		level: toNumber(season.LevelProgress),
+		maxLevel: Array.isArray(season.Levels) && season.Levels.length > 0 ? season.Levels.length : 50,
+		tier: toNumber(season.Tier),
+		endsAt: Number.isFinite(endsAt) ? endsAt : undefined,
 	};
 }
 
