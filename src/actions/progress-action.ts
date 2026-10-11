@@ -42,6 +42,11 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 		return this.placeholder;
 	}
 
+	/** Picture (data URL) shown on message keys instead of {@link fallbackIcon}, e.g. the currency of a balance key. */
+	protected async messagePicture(_settings: T): Promise<string | undefined> {
+		return undefined;
+	}
+
 	/** Loads the item configured on a key, or `undefined` if none is selected. */
 	protected abstract fetchItem(settings: T, force: boolean): Promise<ProgressItem | undefined>;
 
@@ -145,7 +150,9 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 		try {
 			const item = await this.fetchItem(settings, force);
 			if (!item) {
-				await action.setImage(toDataUrl(renderMessageKey(this.fallbackIcon, ...this.placeholderFor(settings), style)));
+				await action.setImage(
+					toDataUrl(renderMessageKey(this.fallbackIcon, ...this.placeholderFor(settings), style, await this.messagePicture(settings))),
+				);
 				return false;
 			}
 
@@ -154,7 +161,9 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 			return true;
 		} catch (error) {
 			streamDeck.logger.warn(`Refresh failed for ${this.manifestId}: ${error instanceof Error ? error.message : error}`);
-			await action.setImage(toDataUrl(renderMessageKey(this.fallbackIcon, ...errorMessage(error), style)));
+			await action.setImage(
+				toDataUrl(renderMessageKey(this.fallbackIcon, ...errorMessage(error), style, await this.messagePicture(settings))),
+			);
 			return false;
 		}
 	}
@@ -222,10 +231,10 @@ export function renderProgressKey(item: ProgressItem, picture: string | undefine
 	);
 }
 
-export function renderMessageKey(icon: string, line1: string, line2: string, style: KeyStyle = {}): string {
+export function renderMessageKey(icon: string, line1: string, line2: string, style: KeyStyle = {}, picture?: string): string {
 	return composeKey(
 		{
-			visual: place(icon, 72, 40),
+			visual: picture ? image(picture, 46, 10, 52) : place(icon, 72, 40),
 			info: text(72, 98, line1, 16) + text(72, 120, line2, 16, COLORS.muted, "normal"),
 			split: 66,
 		},

@@ -40,7 +40,7 @@ export function watchGameSessions(): void {
 		if (session && session.endedAt === undefined && Date.now() - pluginStartedAt < STARTUP_GRACE_MS) {
 			return;
 		}
-		await startSession();
+		await startGameSession();
 	});
 
 	streamDeck.system.onApplicationDidTerminate(async (ev) => {
@@ -54,7 +54,10 @@ export function watchGameSessions(): void {
 	});
 }
 
-async function startSession(): Promise<void> {
+/**
+ * Records the current balance as the start of a game session (at game launch, or on demand from a balance key).
+ */
+export async function startGameSession(): Promise<void> {
 	const startedAt = Date.now();
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		try {

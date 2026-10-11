@@ -3,6 +3,7 @@ import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, t
 import { type ProgressItem } from "../api/progress";
 import { loadBundledImage } from "../bundled-images";
 import { clearProfile, getBalance } from "../api/sot";
+import { startGameSession } from "../game-session";
 import { getGlobalSettings, onGlobalSettingsChanged } from "../global-settings";
 import { type Currency, currencyIcon } from "../progress-icons";
 import { ProgressAction, type ProgressSettings } from "./progress-action";
@@ -62,8 +63,12 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 		});
 	}
 
+	protected override messagePicture(settings: BalanceSettings): Promise<string | undefined> {
+		return loadBundledImage(`currencies/${CURRENCY_IMAGES[toCurrency(settings.currency)]}`);
+	}
+
 	protected override placeholderFor(settings: BalanceSettings): [string, string] {
-		return settings.mode === "game" ? ["Lance", "le jeu"] : this.placeholder;
+		return settings.mode === "game" ? ["Lance le jeu", "ou appuie"] : this.placeholder;
 	}
 
 	protected override async fetchItem(settings: BalanceSettings, force: boolean): Promise<ProgressItem | undefined> {
@@ -136,6 +141,13 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 		}
 		clearTimeout(pending);
 		this.presses.delete(ev.action.id);
+
+		// No game session recorded yet (e.g. the game was already running when the plugin was installed): start one now.
+		if (ev.payload.settings.mode === "game" && !(await getGlobalSettings()).gameSession) {
+			// In the background (it retries for a while if the site is down); keys refresh once it is recorded.
+			void startGameSession();
+			return;
+		}
 
 		await this.refreshFromKey(ev.action);
 	}
