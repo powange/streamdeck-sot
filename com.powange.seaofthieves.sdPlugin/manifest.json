@@ -53,6 +53,22 @@
 			]
 		},
 		{
+			"Name": "Storm",
+			"UUID": "com.powange.seaofthieves.storm",
+			"Icon": "imgs/actions/storm/icon",
+			"Tooltip": "Storm tracker (Merfolk's Lullaby forecasts): island under the storm or one of the next five, and when. Press to refresh.",
+			"PropertyInspectorPath": "ui/storm.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/storm/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Session Counter",
 			"UUID": "com.powange.seaofthieves.counter",
 			"Icon": "imgs/actions/counter/icon",

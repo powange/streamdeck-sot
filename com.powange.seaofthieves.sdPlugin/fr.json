@@ -36,5 +36,9 @@
 	"com.powange.seaofthieves.season": {
 		"Name": "Saison",
 		"Tooltip": "Affiche ton niveau de renommée dans la saison en cours. Appuie pour actualiser."
+	},
+	"com.powange.seaofthieves.storm": {
+		"Name": "Tempête",
+		"Tooltip": "Suivi de la tempête (prévisions Merfolk's Lullaby) : île actuelle ou l'une des cinq suivantes, et quand. Appuie pour actualiser."
 	}
 }

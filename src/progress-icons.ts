@@ -109,3 +109,15 @@ export function seasonIcon(): string {
 		`<circle cx="0" cy="0" r="7" fill="${COLORS.gold}" stroke="#9c7414" stroke-width="2"/>`
 	);
 }
+
+/**
+ * Storm cloud with lightning and rain. Centred on (0, 0), ~56 units wide.
+ */
+export function stormIcon(): string {
+	return (
+		`<path d="M-20,6 C-30,6 -30,-8 -20,-9 C-20,-22 -2,-26 4,-15 C14,-22 28,-14 24,-3 C32,-1 30,10 22,10 L-20,10 Z" fill="#5d6b78"/>` +
+		`<path d="M-14,-2 C-14,-12 -2,-15 2,-8" fill="none" stroke="#7d8b98" stroke-width="3" stroke-linecap="round"/>` +
+		`<polygon points="2,8 -6,22 0,22 -4,32 8,16 2,16 6,8" fill="${COLORS.gold}"/>` +
+		`<path d="M-16,16 L-19,24 M-8,16 L-11,24 M14,16 L11,24 M20,16 L17,24" stroke="${COLORS.teal}" stroke-width="2.5" stroke-linecap="round"/>`
+	);
+}

@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Tempête</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<style>
+			.help {
+				font-size: 9pt;
+				line-height: 1.4;
+				color: #b0b0b0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<sdpi-item label="Île">
+			<sdpi-select setting="offset" default="1">
+				<option value="0">Île actuelle</option>
+				<option value="1">Prochaine île (+1)</option>
+				<option value="2">+2</option>
+				<option value="3">+3</option>
+				<option value="4">+4</option>
+				<option value="5">+5</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Disposition">
+			<sdpi-checkbox setting="textOnTop" label="Texte en haut, image en bas"></sdpi-checkbox>
+		</sdpi-item>
+
+		<sdpi-item label="Usage">
+			<p>Affiche l'île sous la tempête ou l'une des suivantes, et dans combien de temps la tempête l'atteint. Appui court : actualiser.</p>
+		</sdpi-item>
+
+		<p class="help">
+			Prévisions de <b>Merfolk's Lullaby</b> (merfolkslullaby.com), actualisées toutes les 24 minutes comme sur leur carte. Elles couvrent environ 1 h 20 : au-delà, le bouton affiche « hors prévision ».
+		</p>
+	</body>
+</html>
