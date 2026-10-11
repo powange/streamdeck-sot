@@ -16,36 +16,76 @@ const TICK_MS = 1000;
 
 const NIGHT_BACKGROUND = "#07121a";
 
-/** The clock border runs along the edge of the key, this far inside it. */
-const BORDER_INSET = 5;
-const BORDER_SIDE = KEY_SIZE - 2 * BORDER_INSET;
-const BORDER_LENGTH = 4 * BORDER_SIDE;
+/** The clock border runs along the edge of the key, this far inside it, with rounded corners like the keys. */
+const BORDER_INSET = 7;
+const BORDER_RADIUS = 18;
 
-/** Border path, clockwise from the middle of the top edge (midnight). */
-const BORDER_PATH = (() => {
+type Segment = { length: number; point: (distance: number) => [number, number] };
+
+/** Border pieces, clockwise from the middle of the top edge (midnight): straight lines and quarter circles. */
+const BORDER_SEGMENTS: Segment[] = (() => {
 	const min = BORDER_INSET;
 	const max = KEY_SIZE - BORDER_INSET;
 	const mid = KEY_SIZE / 2;
-	return `M${mid},${min} H${max} V${max} H${min} V${min} Z`;
+	const r = BORDER_RADIUS;
+	const line = (x1: number, y1: number, x2: number, y2: number): Segment => {
+		const length = Math.hypot(x2 - x1, y2 - y1);
+		return { length, point: (d) => [x1 + ((x2 - x1) * d) / length, y1 + ((y2 - y1) * d) / length] };
+	};
+	// Angles grow clockwise, as the y axis points down.
+	const arc = (cx: number, cy: number, startAngle: number): Segment => ({
+		length: (Math.PI * r) / 2,
+		point: (d) => [cx + r * Math.cos(startAngle + d / r), cy + r * Math.sin(startAngle + d / r)],
+	});
+	return [
+		line(mid, min, max - r, min),
+		arc(max - r, min + r, -Math.PI / 2),
+		line(max, min + r, max, max - r),
+		arc(max - r, max - r, 0),
+		line(max - r, max, min + r, max),
+		arc(min + r, max - r, Math.PI / 2),
+		line(min, max - r, min, min + r),
+		arc(min + r, min + r, Math.PI),
+		line(min + r, min, mid, min),
+	];
+})();
+
+const BORDER_LENGTH = BORDER_SEGMENTS.reduce((total, segment) => total + segment.length, 0);
+
+const BORDER_PATH = (() => {
+	const min = BORDER_INSET;
+	const max = KEY_SIZE - BORDER_INSET;
+	const r = BORDER_RADIUS;
+	const corner = (x: number, y: number) => `A${r},${r} 0 0 1 ${x},${y}`;
+	return (
+		`M${KEY_SIZE / 2},${min} H${max - r} ${corner(max, min + r)} V${max - r} ${corner(max - r, max)} ` +
+		`H${min + r} ${corner(min, max - r)} V${min + r} ${corner(min + r, min)} Z`
+	);
 })();
 
 /**
  * Point at a fraction (0-1) of the border, clockwise from the middle of the top edge.
  */
 function borderPoint(fraction: number): [number, number] {
-	const min = BORDER_INSET;
-	const max = KEY_SIZE - BORDER_INSET;
-	let d = (((fraction % 1) + 1) % 1) * BORDER_LENGTH;
-	const half = BORDER_SIDE / 2;
-	if (d <= half) return [KEY_SIZE / 2 + d, min];
-	d -= half;
-	if (d <= BORDER_SIDE) return [max, min + d];
-	d -= BORDER_SIDE;
-	if (d <= BORDER_SIDE) return [max - d, max];
-	d -= BORDER_SIDE;
-	if (d <= BORDER_SIDE) return [min, max - d];
-	d -= BORDER_SIDE;
-	return [min + d, min];
+	let distance = (((fraction % 1) + 1) % 1) * BORDER_LENGTH;
+	for (const segment of BORDER_SEGMENTS) {
+		if (distance <= segment.length) return segment.point(distance);
+		distance -= segment.length;
+	}
+	return [KEY_SIZE / 2, BORDER_INSET];
+}
+
+/**
+ * Day of the cycle in a gold pill, readable from a distance.
+ */
+function dayBadge(day: number): string {
+	const label = `Jour ${day}`;
+	const width = label.length * 8.6 + 12;
+	const right = KEY_SIZE - BORDER_INSET - 6;
+	return (
+		`<rect x="${(right - width).toFixed(1)}" y="15" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${COLORS.gold}"/>` +
+		text(right - width / 2, 31, label, 15, COLORS.ink)
+	);
 }
 
 /**
@@ -60,7 +100,7 @@ function clockBorder(dayProgress: number): string {
 		)
 		.join("");
 	const [x, y] = borderPoint(dayProgress);
-	return segments + `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" fill="${COLORS.danger}" stroke="#ffffff" stroke-width="2"/>`;
+	return segments + `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="${COLORS.danger}" stroke="#ffffff" stroke-width="2"/>`;
 }
 
 /**
@@ -118,7 +158,7 @@ export function renderClockKey(time: GameTime, style: KeyStyle = {}): string {
 	const night = time.period === "night";
 	const key = composeKey(
 		{
-			visual: place(periodIcon(time.period), 72, 40, 0.85) + text(130, 26, `J${time.day}`, 13, COLORS.gold, "bold", "end"),
+			visual: place(periodIcon(time.period), 40, 42, 0.7) + dayBadge(time.day),
 			info:
 				text(72, 98, `${time.hours}:${String(time.minutes).padStart(2, "0")}`, 32) +
 				text(72, 120, style.title ?? PERIOD_LABELS[time.period], 13, COLORS.muted, "normal"),
