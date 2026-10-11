@@ -79,3 +79,8 @@ Temps depuis la pose sur le feu (cuit / brûlé), valeur « cuit » la plus prud
 | Poisson trophée | 90 s | 180 s |
 | Viandes (poulet, porc, serpent, requin) | 60 s | 120 s |
 | Kraken, mégalodon | 120 s | 240 s |
+
+## Mentions
+
+Plugin non officiel, gratuit, créé par un fan. Les icônes des monnaies proviennent du site seaofthieves.com.
+Sea of Thieves © Microsoft Corporation. Ce plugin a été créé dans le cadre des [règles d'utilisation du contenu de jeu de Microsoft](https://www.xbox.com/fr-FR/developers/rules) à l'aide de ressources de Sea of Thieves ; il n'est ni approuvé par Microsoft ni affilié à Microsoft.

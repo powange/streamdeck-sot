@@ -136,7 +136,7 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 				return false;
 			}
 
-			const picture = item.imageUrl ? await loadImage(item.imageUrl) : undefined;
+			const picture = item.imageData ?? (item.imageUrl ? await loadImage(item.imageUrl) : undefined);
 			await action.setImage(toDataUrl(renderProgressKey(item, picture, this.fallbackIcon, style)));
 			return true;
 		} catch (error) {

@@ -12,6 +12,8 @@ export type ProgressItem = {
 	target: number;
 	completed: boolean;
 	imageUrl?: string;
+	/** Image already loaded as a data URL (e.g. bundled with the plugin); takes precedence over `imageUrl`. */
+	imageData?: string;
 	/** Icon (SVG drawn around 0, 0) shown when there is no image; defaults to the action's icon. */
 	icon?: string;
 	/** Replaces the "current / target" text. */
