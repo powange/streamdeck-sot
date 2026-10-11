@@ -70,9 +70,22 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 
 	override async onKeyDown(ev: KeyDownEvent<T>): Promise<void> {
 		this.settings.set(ev.action.id, ev.payload.settings);
-		const ok = await this.refresh(ev.action, true);
-		if (ev.action.isKey()) {
-			await (ok ? ev.action.showOk() : ev.action.showAlert());
+		await this.refreshFromKey(ev.action);
+	}
+
+	/**
+	 * Refreshes a pressed key from the network, shows the result, then redraws the other visible keys of this action,
+	 * which share the freshly loaded data (no extra request).
+	 */
+	protected async refreshFromKey(action: Action<T>): Promise<void> {
+		const ok = await this.refresh(action, true);
+		if (action.isKey()) {
+			await (ok ? action.showOk() : action.showAlert());
+		}
+		for (const other of this.actions) {
+			if (other.id !== action.id) {
+				await this.refresh(other, false);
+			}
 		}
 	}
 

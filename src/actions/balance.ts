@@ -137,10 +137,7 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 		clearTimeout(pending);
 		this.presses.delete(ev.action.id);
 
-		const ok = await this.refresh(ev.action, true);
-		if (ev.action.isKey()) {
-			await (ok ? ev.action.showOk() : ev.action.showAlert());
-		}
+		await this.refreshFromKey(ev.action);
 	}
 
 	private async startSession(action: Action<BalanceSettings>, settings: BalanceSettings): Promise<void> {
