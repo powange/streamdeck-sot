@@ -24,5 +24,9 @@
 	"com.powange.seaofthieves.stopwatch": {
 		"Name": "Chronomètre",
 		"Tooltip": "Chronomètre. Appuie pour démarrer / mettre en pause, maintiens pour remettre à zéro."
+	},
+	"com.powange.seaofthieves.faction-level": {
+		"Name": "Niveau de faction",
+		"Tooltip": "Affiche le niveau d'une faction ou d'une guilde de ton profil pirate seaofthieves.com. Appuie pour actualiser."
 	}
 }

@@ -12,6 +12,10 @@ export type ProgressItem = {
 	target: number;
 	completed: boolean;
 	imageUrl?: string;
+	/** Icon (SVG drawn around 0, 0) shown when there is no image; defaults to the action's icon. */
+	icon?: string;
+	/** Replaces the "current / target" text. */
+	valueText?: string;
 };
 
 export type ApiErrorKind = "missing-credentials" | "auth" | "rate-limit" | "http";

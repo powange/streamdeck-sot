@@ -18,6 +18,7 @@ Prérequis : Stream Deck 7.1 ou plus récent, sous Windows.
 - **Sons** (minuteurs de cuisson et de jeu, Windows) : cloche quand c'est cuit ou à chaque nouvelle journée, bips 10 s avant que ça brûle ou 1 min avant la fin d'un minuteur, triple cloche quand c'est brûlé ou terminé. Désactivables par bouton ; le son de fin peut être remplacé par un fichier `.wav`.
 - **Compteur de session** : appui court = +1, appui long = remise à zéro. Icônes : coffre, crâne, mort, navire coulé, autre.
 - **Commendation** : affiche la progression d'une commendation de ton profil pirate [seaofthieves.com](https://www.seaofthieves.com/profile/reputation) (grade, valeur / seuil, image). Choix en cascade : faction → campagne → commendation. Appuie pour actualiser.
+- **Niveau de faction** : niveau d'une compagnie, d'une faction (Gardiens de la fortune, Serviteurs de la flamme) ou d'une guilde, avec la distinction et la progression vers le niveau suivant. Même token RAT que les commendations.
 - **Succès Xbox** : affiche la progression d'un succès Xbox de Sea of Thieves via [OpenXBL](https://xbl.io). Appuie pour actualiser.
 
 ### Titre et disposition

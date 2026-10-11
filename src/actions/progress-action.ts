@@ -185,11 +185,11 @@ export function renderProgressKey(item: ProgressItem, picture: string | undefine
 	return composeKey(
 		{
 			visual:
-				(picture ? image(picture, 44, 4, 56) : place(fallbackIcon, 72, 34)) +
+				(picture ? image(picture, 44, 4, 56) : place(item.icon ?? fallbackIcon, 72, 34)) +
 				(item.badge ? text(138, 18, item.badge, 14, COLORS.gold, "bold", "end") : ""),
 			info:
 				lines.map((line, i) => text(72, (lines.length === 1 ? 84 : 76) + i * 16, line, 14)).join("") +
-				text(72, 121, item.completed ? "TERMINÉ" : `${compact(item.current)} / ${compact(item.target)}`, 16, item.completed ? COLORS.cooked : COLORS.text),
+				text(72, 121, item.valueText ?? (item.completed ? "TERMINÉ" : `${compact(item.current)} / ${compact(item.target)}`), 16, item.completed ? COLORS.cooked : COLORS.text),
 			bar: progressBar(ratio, color),
 			split: 62,
 		},

@@ -2,7 +2,7 @@ import streamDeck, { action, type DidReceiveSettingsEvent, type SendToPluginEven
 import type { JsonValue } from "@elgato/utils";
 
 import { type ProgressItem } from "../api/progress";
-import { clearCommendations, type Commendation, getCommendations } from "../api/sot";
+import { clearProfile, type Commendation, getCommendations } from "../api/sot";
 import { onGlobalSettingsChanged } from "../global-settings";
 import { medalIcon } from "../progress-icons";
 import { errorMessage, type ListItem, ProgressAction, type ProgressSettings } from "./progress-action";
@@ -28,7 +28,7 @@ export class CommendationProgress extends ProgressAction<CommendationSettings> {
 		onGlobalSettingsChanged(async (settings) => {
 			if (settings.ratCookie === this.lastToken) return;
 			this.lastToken = settings.ratCookie;
-			clearCommendations();
+			clearProfile();
 			await this.refreshAll();
 			await this.sendAllLists();
 		});

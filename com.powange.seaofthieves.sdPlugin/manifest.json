@@ -85,6 +85,22 @@
 			]
 		},
 		{
+			"Name": "Faction Level",
+			"UUID": "com.powange.seaofthieves.faction-level",
+			"Icon": "imgs/actions/faction-level/icon",
+			"Tooltip": "Shows the level of a faction or guild from your seaofthieves.com pirate profile. Press to refresh.",
+			"PropertyInspectorPath": "ui/faction-level.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/faction-level/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Xbox Achievement",
 			"UUID": "com.powange.seaofthieves.xbox-achievement",
 			"Icon": "imgs/actions/xbox-achievement/icon",

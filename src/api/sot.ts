@@ -5,21 +5,35 @@ import { ApiError, CachedLoader, type ProgressItem, toNumber } from "./progress"
  * Unofficial www.seaofthieves.com profile API, authenticated with the `rat` cookie of a logged-in browser session.
  * The French prefix returns French names. Response format documented from the sot-reputations project.
  */
-const REPUTATION_URL = "https://www.seaofthieves.com/fr/api/profilev2/reputation";
+const PROFILE_URL = "https://www.seaofthieves.com/fr/api/profilev2";
 
+/** Faction names; `PirateLord` and `Flameheart` are the Guardians of Fortune and the Servants of the Flame. */
 const FACTION_LABELS: Record<string, string> = {
 	AthenasFortune: "Fortune d'Athéna",
 	BilgeRats: "Rats de cale",
 	CreatorCrew: "Équipage des créateurs",
-	Flameheart: "Flameheart",
+	Flameheart: "Serviteurs de la flamme",
 	GoldHoarders: "Chercheurs d'or",
 	HuntersCall: "Appel du chasseur",
 	MerchantAlliance: "Alliance des marchands",
 	OrderOfSouls: "Ordre des âmes",
-	PirateLord: "Seigneur des pirates",
+	PirateLord: "Gardiens de la fortune",
 	ReapersBones: "Os du Faucheur",
 	SeaDogs: "Loups de mer",
 	TallTales: "Légendes",
+};
+
+/** Short names that fit on a key. */
+const FACTION_SHORT_LABELS: Record<string, string> = {
+	AthenasFortune: "Athéna",
+	Flameheart: "Serviteurs",
+	GoldHoarders: "Chercheurs d'or",
+	HuntersCall: "Chasseurs",
+	MerchantAlliance: "Marchands",
+	OrderOfSouls: "Ordre des âmes",
+	PirateLord: "Gardiens",
+	ReapersBones: "Faucheurs",
+	SeaDogs: "Loups de mer",
 };
 
 type Emblem = {
@@ -39,6 +53,12 @@ type Emblem = {
 
 type Faction = {
 	IsGuild?: boolean;
+	GuildName?: string;
+	Level?: number;
+	DistinctionLevel?: number;
+	/** Fraction (0-1) of the way to the next level. */
+	Progress?: number;
+	Rank?: string;
 	Emblems?: { Emblems?: Emblem[] };
 	Campaigns?: Record<string, { Title?: string; Emblems?: Emblem[] }>;
 };
@@ -51,23 +71,53 @@ export type Commendation = ProgressItem & {
 	campaign?: { key: string; label: string };
 };
 
-const reputation = new CachedLoader(loadCommendations, 5 * 60_000, 10_000);
+/**
+ * Level of a trading company, a faction or a guild.
+ */
+export type FactionLevel = {
+	key: string;
+	label: string;
+	shortLabel: string;
+	isGuild: boolean;
+	level: number;
+	distinction: number;
+	/** Fraction (0-1) of the way to the next level. */
+	progress: number;
+	rank?: string;
+};
 
-export function getCommendations(force = false): Promise<Commendation[]> {
-	return reputation.get(force);
+type Reputation = { commendations: Commendation[]; factions: FactionLevel[] };
+
+const reputation = new CachedLoader(loadReputation, 5 * 60_000, 10_000);
+
+export async function getCommendations(force = false): Promise<Commendation[]> {
+	return (await reputation.get(force)).commendations;
 }
 
-export function clearCommendations(): void {
+export async function getFactionLevels(force = false): Promise<FactionLevel[]> {
+	return (await reputation.get(force)).factions;
+}
+
+/** Forgets cached profile data, e.g. after the token changed. */
+export function clearProfile(): void {
 	reputation.clear();
 }
 
-async function loadCommendations(): Promise<Commendation[]> {
+async function loadReputation(): Promise<Reputation> {
+	const json = await fetchProfile<Record<string, Faction>>("reputation");
+	return { commendations: parseReputation(json), factions: parseFactionLevels(json) };
+}
+
+/**
+ * Calls an endpoint of the profile API (`reputation`, `balance`...) with the `rat` cookie.
+ */
+export async function fetchProfile<T>(endpoint: string): Promise<T> {
 	const token = normalizeToken((await getGlobalSettings()).ratCookie);
 	if (!token) {
 		throw new ApiError("missing-credentials", "Token RAT manquant");
 	}
 
-	const response = await fetch(REPUTATION_URL, {
+	const response = await fetch(`${PROFILE_URL}/${endpoint}`, {
 		headers: {
 			Accept: "application/json",
 			"Accept-Language": "fr-FR,fr;q=0.9",
@@ -89,7 +139,7 @@ async function loadCommendations(): Promise<Commendation[]> {
 
 	const body = await response.text();
 	try {
-		return parseReputation(JSON.parse(body) as Record<string, Faction>);
+		return JSON.parse(body) as T;
 	} catch {
 		// An expired session may be answered with the HTML login page instead of JSON.
 		throw new ApiError("auth", "Réponse inattendue (token expiré ?)");
@@ -119,6 +169,44 @@ export function parseReputation(json: Record<string, Faction>): Commendation[] {
 		}
 	}
 	return items;
+}
+
+export function parseFactionLevels(json: Record<string, Faction>): FactionLevel[] {
+	const levels: FactionLevel[] = [];
+	const guildNames = new Map<string, number>();
+
+	for (const [key, faction] of Object.entries(json)) {
+		// Bilge Rats, Tall Tales and the Creator Crew have no levels.
+		if (!faction || typeof faction !== "object" || typeof faction.Level !== "number") {
+			continue;
+		}
+
+		let label: string;
+		let shortLabel: string;
+		if (faction.IsGuild) {
+			// Several guilds may share a name.
+			const name = faction.GuildName || "Guilde";
+			const count = (guildNames.get(name) ?? 0) + 1;
+			guildNames.set(name, count);
+			label = `Guilde ${name}${count > 1 ? ` (${count})` : ""}`;
+			shortLabel = name;
+		} else {
+			label = FACTION_LABELS[key] ?? key;
+			shortLabel = FACTION_SHORT_LABELS[key] ?? label;
+		}
+
+		levels.push({
+			key,
+			label,
+			shortLabel,
+			isGuild: faction.IsGuild === true,
+			level: faction.Level,
+			distinction: toNumber(faction.DistinctionLevel),
+			progress: Math.max(0, Math.min(1, toNumber(faction.Progress))),
+			rank: faction.Rank || undefined,
+		});
+	}
+	return levels;
 }
 
 function toItem(factionKey: string, emblem: Emblem): ProgressItem {
