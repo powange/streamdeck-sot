@@ -101,6 +101,22 @@
 			]
 		},
 		{
+			"Name": "Balance",
+			"UUID": "com.powange.seaofthieves.balance",
+			"Icon": "imgs/actions/balance/icon",
+			"Tooltip": "Shows your gold, doubloons or ancient coins (total or session gains) from your seaofthieves.com profile. Press to refresh.",
+			"PropertyInspectorPath": "ui/balance.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/balance/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Xbox Achievement",
 			"UUID": "com.powange.seaofthieves.xbox-achievement",
 			"Icon": "imgs/actions/xbox-achievement/icon",

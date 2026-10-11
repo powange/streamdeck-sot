@@ -54,3 +54,38 @@ export function factionIcon(factionKey: string, isGuild = false): string {
 		`<circle cx="6.5" cy="-9" r="2" fill="${color}"/>`
 	);
 }
+
+export type Currency = "gold" | "doubloons" | "ancientCoins";
+
+/**
+ * Currency icon centred on (0, 0), roughly 50 units wide: a stack of gold coins, a doubloon or an ancient coin.
+ */
+export function currencyIcon(currency: Currency): string {
+	const coin = (cx: number, cy: number, face: string, edge: string) =>
+		`<ellipse cx="${cx}" cy="${cy + 3}" rx="16" ry="6" fill="${edge}"/>` + `<ellipse cx="${cx}" cy="${cy}" rx="16" ry="6" fill="${face}"/>`;
+
+	switch (currency) {
+		case "gold":
+			return (
+				coin(-8, 16, COLORS.gold, "#9c7414") +
+				coin(-8, 8, COLORS.gold, "#9c7414") +
+				coin(-8, 0, COLORS.gold, "#9c7414") +
+				coin(10, 16, COLORS.gold, "#9c7414") +
+				`<circle cx="8" cy="-12" r="14" fill="${COLORS.gold}" stroke="#9c7414" stroke-width="3"/>` +
+				`<text x="8" y="-7" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#9c7414" text-anchor="middle">G</text>`
+			);
+		case "doubloons":
+			return (
+				`<circle cx="0" cy="0" r="24" fill="#9db4c8" stroke="#5d7a94" stroke-width="4"/>` +
+				`<circle cx="0" cy="0" r="15" fill="none" stroke="#5d7a94" stroke-width="2"/>` +
+				`<polygon points="0,-11 3,-3 11,-3 5,2 7,10 0,5 -7,10 -5,2 -11,-3 -3,-3" fill="#5d7a94"/>`
+			);
+		case "ancientCoins":
+			return (
+				`<circle cx="0" cy="0" r="27" fill="#2fb5a6" opacity="0.25"/>` +
+				`<circle cx="0" cy="0" r="22" fill="#3fd0c0" stroke="#1d7f75" stroke-width="4"/>` +
+				`<path d="M-8,-10 L8,-10 L12,0 L8,10 L-8,10 L-12,0 Z" fill="none" stroke="#1d7f75" stroke-width="3"/>` +
+				`<circle cx="0" cy="0" r="4" fill="#1d7f75"/>`
+			);
+	}
+}

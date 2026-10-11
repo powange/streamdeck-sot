@@ -101,11 +101,35 @@ export async function getFactionLevels(force = false): Promise<FactionLevel[]> {
 /** Forgets cached profile data, e.g. after the token changed. */
 export function clearProfile(): void {
 	reputation.clear();
+	balance.clear();
 }
 
 async function loadReputation(): Promise<Reputation> {
 	const json = await fetchProfile<Record<string, Faction>>("reputation");
 	return { commendations: parseReputation(json), factions: parseFactionLevels(json) };
+}
+
+export type Balance = {
+	gold: number;
+	doubloons: number;
+	doubloonsLimit: number;
+	ancientCoins: number;
+};
+
+const balance = new CachedLoader(loadBalance, 2 * 60_000, 10_000);
+
+export function getBalance(force = false): Promise<Balance> {
+	return balance.get(force);
+}
+
+async function loadBalance(): Promise<Balance> {
+	const json = await fetchProfile<Record<string, unknown>>("balance");
+	return {
+		gold: toNumber(json.gold),
+		doubloons: toNumber(json.doubloons),
+		doubloonsLimit: toNumber(json.doubloonsLimit),
+		ancientCoins: toNumber(json.ancientCoins),
+	};
 }
 
 /**

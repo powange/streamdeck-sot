@@ -93,6 +93,13 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 		return this.settings.get(id);
 	}
 
+	/** Persists new settings for a key and redraws it. */
+	protected async saveSettings(action: Action<T>, settings: T): Promise<void> {
+		this.settings.set(action.id, settings);
+		await action.setSettings(settings);
+		await this.refresh(action, false);
+	}
+
 	private scheduleRefresh(action: Action<T>, settings: T): void {
 		clearInterval(this.refreshTimers.get(action.id));
 		this.refreshTimers.delete(action.id);
@@ -110,7 +117,7 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 	/**
 	 * Fetches the item of a key and draws it. Returns `false` when it failed.
 	 */
-	private async refresh(action: Action<T>, force: boolean): Promise<boolean> {
+	protected async refresh(action: Action<T>, force: boolean): Promise<boolean> {
 		if (!action.isKey()) {
 			return false;
 		}
@@ -190,7 +197,7 @@ export function renderProgressKey(item: ProgressItem, picture: string | undefine
 			info:
 				lines.map((line, i) => text(72, (lines.length === 1 ? 84 : 76) + i * 16, line, 14)).join("") +
 				text(72, 121, item.valueText ?? (item.completed ? "TERMINÉ" : `${compact(item.current)} / ${compact(item.target)}`), 16, item.completed ? COLORS.cooked : COLORS.text),
-			bar: progressBar(ratio, color),
+			bar: item.noBar ? undefined : progressBar(ratio, color),
 			split: 62,
 		},
 		style,

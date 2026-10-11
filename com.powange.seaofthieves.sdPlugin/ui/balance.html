@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Bourse</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<style>
+			.help {
+				font-size: 9pt;
+				line-height: 1.4;
+				color: #b0b0b0;
+			}
+			.help code {
+				color: #e0e0e0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<sdpi-item label="Token RAT">
+			<sdpi-password global setting="ratCookie" placeholder="Cookie « rat » de seaofthieves.com"></sdpi-password>
+		</sdpi-item>
+
+		<sdpi-item label="Monnaie">
+			<sdpi-select setting="currency" default="gold">
+				<option value="gold">Or</option>
+				<option value="doubloons">Doublons</option>
+				<option value="ancientCoins">Pièces anciennes</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Affichage">
+			<sdpi-select setting="mode" default="total">
+				<option value="total">Total</option>
+				<option value="session">Gains de la session</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Actualisation">
+			<sdpi-select setting="refreshMinutes" default="0">
+				<option value="0">Seulement à l'appui</option>
+				<option value="5">Toutes les 5 min</option>
+				<option value="15">Toutes les 15 min</option>
+				<option value="30">Toutes les 30 min</option>
+				<option value="60">Toutes les heures</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Disposition">
+			<sdpi-checkbox setting="textOnTop" label="Texte en haut, image en bas"></sdpi-checkbox>
+		</sdpi-item>
+
+		<sdpi-item label="Usage">
+			<p>Appui court : actualiser. En mode « Gains de la session », appui long : démarrer une nouvelle session (l'heure de départ s'affiche en haut à droite).</p>
+		</sdpi-item>
+
+		<details class="help">
+			<summary>Obtenir le token RAT</summary>
+			<ol>
+				<li>Connecte-toi sur <code>www.seaofthieves.com</code> et ouvre ton profil pirate.</li>
+				<li>Ouvre les outils de développement (F12) → onglet <b>Application</b> → <b>Cookies</b> → <code>https://www.seaofthieves.com</code>.</li>
+				<li>Copie la valeur du cookie <code>rat</code> et colle-la ci-dessus.</li>
+			</ol>
+			<p>Le token expire au bout de ~14 jours : le bouton affiche alors « Connexion expirée ». Il donne accès à ton compte seaofthieves.com, ne le partage pas.</p>
+		</details>
+
+	</body>
+</html>

@@ -1,5 +1,6 @@
 import streamDeck from "@elgato/streamdeck";
 
+import { BalanceProgress } from "./actions/balance";
 import { CommendationProgress } from "./actions/commendation";
 import { CookingTimer } from "./actions/cooking-timer";
 import { FactionLevelProgress } from "./actions/faction-level";
@@ -16,6 +17,7 @@ streamDeck.actions.registerAction(new Stopwatch());
 streamDeck.actions.registerAction(new SessionCounter());
 streamDeck.actions.registerAction(new CommendationProgress());
 streamDeck.actions.registerAction(new FactionLevelProgress());
+streamDeck.actions.registerAction(new BalanceProgress());
 streamDeck.actions.registerAction(new XboxAchievementProgress());
 
 streamDeck.connect();

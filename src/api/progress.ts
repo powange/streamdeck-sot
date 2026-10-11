@@ -16,6 +16,8 @@ export type ProgressItem = {
 	icon?: string;
 	/** Replaces the "current / target" text. */
 	valueText?: string;
+	/** Hides the progress bar, for plain values. */
+	noBar?: boolean;
 };
 
 export type ApiErrorKind = "missing-credentials" | "auth" | "rate-limit" | "http";
