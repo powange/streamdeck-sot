@@ -10,8 +10,8 @@ import {
 	type WillDisappearEvent,
 } from "@elgato/streamdeck";
 
-import { counterDay, getDayCounter, pauseCountersForGame, resetDayCounter, resumeCountersForGame, toggleDayCounter } from "../day-counter";
-import { onGameClosed, onGameLaunched } from "../game-session";
+import { counterDay, getDayCounter, resetDayCounter, startDayCounter, stopCountersForGame } from "../day-counter";
+import { onGameClosed } from "../game-session";
 import { type GameTime, getGameTime, PERIOD_COLORS, PERIOD_LABELS, periodIcon, periodRanges } from "../game-clock";
 import { cleanTitle, COLORS, composeKey, KEY_SIZE, type KeyStyle, place, text, toDataUrl } from "../svg";
 
@@ -22,7 +22,7 @@ const TICK_MS = 1000;
 const LONG_PRESS_MS = 600;
 
 /** State of the day counter shown on a key. */
-type CounterState = { day: number; paused: boolean };
+type CounterState = { day: number; stopped: boolean };
 
 const NIGHT_BACKGROUND = "#07121a";
 
@@ -87,9 +87,9 @@ function borderPoint(fraction: number): [number, number] {
 
 /**
  * Day in a pill, readable from a distance: outlined for the day of the game cycle, filled gold for the player's day
- * counter, filled grey when that counter is paused.
+ * counter, filled grey once the game closed and stopped it.
  */
-function dayBadge(day: number, style: "cycle" | "counting" | "paused"): string {
+function dayBadge(day: number, style: "cycle" | "counting" | "stopped"): string {
 	const label = `Jour ${day}`;
 	const width = label.length * 8.6 + 12;
 	const right = KEY_SIZE - BORDER_INSET - 6;
@@ -97,7 +97,7 @@ function dayBadge(day: number, style: "cycle" | "counting" | "paused"): string {
 	const pill =
 		style === "cycle"
 			? `<rect x="${x}" y="16" width="${(width - 2).toFixed(1)}" height="19" rx="9.5" fill="none" stroke="${COLORS.gold}" stroke-width="2"/>`
-			: `<rect x="${x}" y="15" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${style === "paused" ? COLORS.muted : COLORS.gold}"/>`;
+			: `<rect x="${x}" y="15" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${style === "stopped" ? COLORS.muted : COLORS.gold}"/>`;
 	return pill + text(right - width / 2, 31, label, 15, style === "cycle" ? COLORS.gold : COLORS.ink);
 }
 
@@ -118,8 +118,8 @@ function clockBorder(dayProgress: number): string {
 
 /**
  * In-game clock: time, period of the day (sunrise, morning, afternoon, sunset, night) and day of the 30-day cycle,
- * computed locally from the real time. Press to count the in-game days spent playing (press again to pause / resume,
- * hold to reset); the count pauses while the game is closed.
+ * computed locally from the real time. Press to start counting the in-game days of a play session, hold to reset;
+ * closing the game stops the count and keeps it on display.
  */
 @action({ UUID: "com.powange.seaofthieves.game-clock" })
 export class GameClock extends SingletonAction<ClockSettings> {
@@ -130,8 +130,7 @@ export class GameClock extends SingletonAction<ClockSettings> {
 
 	constructor() {
 		super();
-		onGameClosed(pauseCountersForGame);
-		onGameLaunched(resumeCountersForGame);
+		onGameClosed(stopCountersForGame);
 	}
 
 	override onKeyDown(ev: KeyDownEvent<ClockSettings>): void {
@@ -155,8 +154,9 @@ export class GameClock extends SingletonAction<ClockSettings> {
 		}
 		clearTimeout(pending);
 		this.presses.delete(ev.action.id);
-		await toggleDayCounter(ev.action.id);
+		const started = await startDayCounter(ev.action.id);
 		await this.render(ev.action);
+		if (started && ev.action.isKey()) await ev.action.showOk();
 	}
 
 	override async onWillAppear(ev: WillAppearEvent<ClockSettings>): Promise<void> {
@@ -208,10 +208,10 @@ export function renderClockKey(time: GameTime, style: KeyStyle = {}, counter?: C
 		{
 			visual:
 				place(periodIcon(time.period), 40, 42, 0.7) +
-				(counter ? dayBadge(counter.day, counter.paused ? "paused" : "counting") : dayBadge(time.day, "cycle")),
+				(counter ? dayBadge(counter.day, counter.stopped ? "stopped" : "counting") : dayBadge(time.day, "cycle")),
 			info:
 				text(72, 98, `${time.hours}:${String(time.minutes).padStart(2, "0")}`, 32) +
-				text(72, 120, style.title ?? (counter?.paused ? "En pause" : PERIOD_LABELS[time.period]), 13, COLORS.muted, "normal"),
+				text(72, 120, style.title ?? (counter?.stopped ? "Fin de session" : PERIOD_LABELS[time.period]), 13, COLORS.muted, "normal"),
 			split: 66,
 			background: night ? NIGHT_BACKGROUND : COLORS.sea,
 		},

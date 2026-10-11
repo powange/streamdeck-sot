@@ -16,15 +16,13 @@ export type GlobalSettings = {
 };
 
 /**
- * Counter of in-game days: `startedAt` while counting, `elapsedMs` while paused.
+ * Counter of in-game days: `startedAt` while counting, `elapsedMs` once stopped by the game closing.
  */
 export type DayCounter = {
-	/** Timestamp (ms) at which the counter would have started had it never been paused. */
+	/** Timestamp (ms) at which the count started. */
 	startedAt?: number;
-	/** Time (ms) counted so far, while paused. */
+	/** Time (ms) counted, once stopped. */
 	elapsedMs?: number;
-	/** Paused because the game was closed: resumes when it starts again. */
-	pausedByGame?: boolean;
 };
 
 export type GameSession = {
