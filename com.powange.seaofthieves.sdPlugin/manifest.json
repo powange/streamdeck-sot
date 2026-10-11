@@ -37,6 +37,22 @@
 			]
 		},
 		{
+			"Name": "Stopwatch",
+			"UUID": "com.powange.seaofthieves.stopwatch",
+			"Icon": "imgs/actions/stopwatch/icon",
+			"Tooltip": "Stopwatch. Press to start / pause, hold to reset.",
+			"PropertyInspectorPath": "ui/stopwatch.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/stopwatch/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Session Counter",
 			"UUID": "com.powange.seaofthieves.counter",
 			"Icon": "imgs/actions/counter/icon",

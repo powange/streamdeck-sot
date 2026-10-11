@@ -91,6 +91,43 @@ export function place(icon: string, x: number, y: number, scale = 1): string {
 	return `<g transform="translate(${x} ${y}) scale(${scale})">${icon}</g>`;
 }
 
+/** Options shared by every key: the Stream Deck title, and whether the text goes above the picture. */
+export type KeyStyle = {
+	/** Title typed in the Stream Deck title field; replaces the default label when set. */
+	title?: string;
+	/** Puts the text on top and the picture below it. */
+	textOnTop?: boolean;
+};
+
+/** Top of the progress bar; content above it is swapped when the text goes on top. */
+const BAR_TOP = 126;
+
+/**
+ * Builds a key from its parts. Normally `visual` (icon / picture) sits above `split` and `info` (texts) below it; with
+ * `textOnTop` the two are swapped, while the progress `bar` stays at the bottom.
+ */
+export function composeKey(
+	parts: { visual: string; info: string; bar?: string; split: number; background?: string },
+	style: KeyStyle,
+): string {
+	const { visual, info, bar = "", split, background } = parts;
+	if (!style.textOnTop) {
+		return keySvg(visual + info + bar, background);
+	}
+	const infoBottom = bar ? BAR_TOP : KEY_SIZE;
+	return keySvg(
+		`<g transform="translate(0 ${-split})">${info}</g>` + `<g transform="translate(0 ${infoBottom - split})">${visual}</g>` + bar,
+		background,
+	);
+}
+
+/**
+ * Normalizes a Stream Deck title (which may span several lines) to a single trimmed line.
+ */
+export function cleanTitle(title: string | undefined): string | undefined {
+	return title?.replace(/\s+/g, " ").trim() || undefined;
+}
+
 /**
  * Draws a horizontal progress bar along the bottom of the key.
  */

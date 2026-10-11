@@ -20,5 +20,9 @@
 	"com.powange.seaofthieves.timer": {
 		"Name": "Minuteur",
 		"Tooltip": "Mégalodon AFK, journée en jeu ou minuteur personnalisé. Appuie pour démarrer / mettre en pause, maintiens pour remettre à zéro."
+	},
+	"com.powange.seaofthieves.stopwatch": {
+		"Name": "Chronomètre",
+		"Tooltip": "Chronomètre. Appuie pour démarrer / mettre en pause, maintiens pour remettre à zéro."
 	}
 }

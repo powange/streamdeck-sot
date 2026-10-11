@@ -57,3 +57,18 @@ export function timerIcon(preset: TimerPresetId): string {
 			);
 	}
 }
+
+/**
+ * Stopwatch icon, centred on (0, 0), roughly 60 units wide.
+ */
+export function stopwatchIcon(): string {
+	return (
+		`<rect x="-5" y="-30" width="10" height="6" rx="2" fill="${COLORS.gold}"/>` +
+		`<rect x="-2" y="-25" width="4" height="5" fill="${COLORS.gold}"/>` +
+		`<path d="M18,-17 L23,-22" stroke="${COLORS.gold}" stroke-width="4" stroke-linecap="round"/>` +
+		`<circle cx="0" cy="2" r="22" fill="${COLORS.bone}" stroke="${COLORS.gold}" stroke-width="4"/>` +
+		`<path d="M0,-14 V-10 M0,14 V18 M-16,2 H-12 M12,2 H16" stroke="${COLORS.ink}" stroke-width="2"/>` +
+		`<path d="M0,2 L8,-8" stroke="${COLORS.danger}" stroke-width="3" stroke-linecap="round"/>` +
+		`<circle cx="0" cy="2" r="3" fill="${COLORS.ink}"/>`
+	);
+}

@@ -1,7 +1,16 @@
-import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, type KeyUpEvent, SingletonAction, type WillAppearEvent } from "@elgato/streamdeck";
+import {
+	action,
+	type Action,
+	type DidReceiveSettingsEvent,
+	type KeyDownEvent,
+	type KeyUpEvent,
+	SingletonAction,
+	type TitleParametersDidChangeEvent,
+	type WillAppearEvent,
+} from "@elgato/streamdeck";
 
 import { COUNTER_LABELS, counterIcon, type CounterKind, isCounterKind } from "../counter-icons";
-import { COLORS, keySvg, place, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, type KeyStyle, place, text, toDataUrl } from "../svg";
 
 /** How long the key must be held to reset the counter. */
 const LONG_PRESS_MS = 600;
@@ -13,13 +22,19 @@ const LONG_PRESS_MS = 600;
 export class SessionCounter extends SingletonAction<CounterSettings> {
 	/** Pending long-press timeouts, per action. */
 	private readonly presses = new Map<string, ReturnType<typeof setTimeout>>();
+	private readonly titles = new Map<string, string | undefined>();
 
 	override async onWillAppear(ev: WillAppearEvent<CounterSettings>): Promise<void> {
-		await render(ev.action, ev.payload.settings);
+		await this.render(ev.action, ev.payload.settings);
 	}
 
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<CounterSettings>): Promise<void> {
-		await render(ev.action, ev.payload.settings);
+		await this.render(ev.action, ev.payload.settings);
+	}
+
+	override async onTitleParametersDidChange(ev: TitleParametersDidChangeEvent<CounterSettings>): Promise<void> {
+		this.titles.set(ev.action.id, cleanTitle(ev.payload.title));
+		await this.render(ev.action, ev.payload.settings);
 	}
 
 	override onKeyDown(ev: KeyDownEvent<CounterSettings>): void {
@@ -31,7 +46,7 @@ export class SessionCounter extends SingletonAction<CounterSettings> {
 				this.presses.delete(action.id);
 				settings.count = 0;
 				await action.setSettings(settings);
-				await render(action, settings);
+				await this.render(action, settings);
 				if (action.isKey()) {
 					await action.showOk();
 				}
@@ -52,22 +67,29 @@ export class SessionCounter extends SingletonAction<CounterSettings> {
 		const settings = ev.payload.settings;
 		settings.count = (Number(settings.count) || 0) + 1;
 		await ev.action.setSettings(settings);
-		await render(ev.action, settings);
+		await this.render(ev.action, settings);
+	}
+
+	private async render(action: Action<CounterSettings>, settings: CounterSettings): Promise<void> {
+		if (action.isKey()) {
+			const style = { title: this.titles.get(action.id), textOnTop: settings.textOnTop === true };
+			await action.setImage(toDataUrl(renderCounterKey(settings, style)));
+		}
 	}
 }
 
-async function render(action: Action<CounterSettings>, settings: CounterSettings): Promise<void> {
-	if (action.isKey()) {
-		await action.setImage(toDataUrl(renderCounterKey(settings)));
-	}
-}
-
-export function renderCounterKey(settings: CounterSettings): string {
+export function renderCounterKey(settings: CounterSettings, style: KeyStyle = {}): string {
 	const kind: CounterKind = isCounterKind(settings.kind) ? settings.kind : "chest";
-	const label = settings.label?.trim() || COUNTER_LABELS[kind];
+	// The Stream Deck title, else the label of versions before 0.3, else the icon name.
+	const label = style.title ?? (settings.label?.trim() || COUNTER_LABELS[kind]);
 	const count = Number(settings.count) || 0;
-	return keySvg(
-		place(counterIcon(kind), 72, 38) + text(72, 104, String(count), 40) + text(72, 130, label, 16, COLORS.muted, "normal"),
+	return composeKey(
+		{
+			visual: place(counterIcon(kind), 72, 38),
+			info: text(72, 104, String(count), 40) + text(72, 130, label, 16, COLORS.muted, "normal"),
+			split: 66,
+		},
+		style,
 	);
 }
 
@@ -76,6 +98,8 @@ export function renderCounterKey(settings: CounterSettings): string {
  */
 type CounterSettings = {
 	kind?: string;
+	/** Label of versions before 0.3; the Stream Deck title is used instead now. */
 	label?: string;
+	textOnTop?: boolean;
 	count?: number;
 };

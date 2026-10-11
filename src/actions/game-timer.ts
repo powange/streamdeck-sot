@@ -5,12 +5,13 @@ import {
 	type KeyDownEvent,
 	type KeyUpEvent,
 	SingletonAction,
+	type TitleParametersDidChangeEvent,
 	type WillAppearEvent,
 	type WillDisappearEvent,
 } from "@elgato/streamdeck";
 
 import { playSound, type SoundSettings } from "../sound";
-import { COLORS, keySvg, place, progressBar, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, type KeyStyle, place, progressBar, text, toDataUrl } from "../svg";
 import { getTimerPreset, type TimerPreset, timerIcon } from "../timer-presets";
 
 /** How often running timers are redrawn. */
@@ -24,6 +25,9 @@ const WARNING_MS = 60_000;
 
 /** Ends older than this are not signalled (e.g. a timer that expired while Stream Deck was closed). */
 const STALE_MS = 5_000;
+
+/** How long a finished key flashes before staying red. */
+const FLASH_MS = 30_000;
 
 type Phase = "idle" | "running" | "paused" | "finished";
 
@@ -41,6 +45,7 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 	private readonly signalled = new Map<string, number>();
 	/** End time already warned per action. */
 	private readonly warned = new Map<string, number>();
+	private readonly titles = new Map<string, string | undefined>();
 	private ticker: ReturnType<typeof setInterval> | undefined;
 
 	override async onWillAppear(ev: WillAppearEvent<TimerSettings>): Promise<void> {
@@ -63,6 +68,11 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 		await this.render(ev.action);
 	}
 
+	override async onTitleParametersDidChange(ev: TitleParametersDidChangeEvent<TimerSettings>): Promise<void> {
+		this.titles.set(ev.action.id, cleanTitle(ev.payload.title));
+		await this.render(ev.action);
+	}
+
 	override onKeyDown(ev: KeyDownEvent<TimerSettings>): void {
 		const { action } = ev;
 		this.settings.set(action.id, ev.payload.settings);
@@ -70,7 +80,7 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 			action.id,
 			setTimeout(async () => {
 				this.presses.delete(action.id);
-				await this.update(action, { endsAt: undefined, remainingMs: undefined });
+				await this.update(action, { endsAt: undefined, remainingMs: undefined, cycles: undefined });
 				if (action.isKey()) await action.showOk();
 			}, LONG_PRESS_MS),
 		);
@@ -89,7 +99,7 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 		const now = Date.now();
 		switch (getPhase(settings, now)) {
 			case "idle":
-				await this.update(ev.action, { endsAt: now + duration(settings) * 1000, remainingMs: undefined });
+				await this.update(ev.action, { endsAt: now + duration(settings) * 1000, remainingMs: undefined, cycles: undefined });
 				break;
 			case "running":
 				await this.update(ev.action, { endsAt: undefined, remainingMs: settings.endsAt! - now });
@@ -163,7 +173,8 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 		if (repeating) {
 			// Repeating timers (in-game day) roll over to the next cycle instead of finishing.
 			const cycle = duration(settings) * 1000;
-			const next = { ...settings, endsAt: endsAt + Math.ceil((now - endsAt + 1) / cycle) * cycle };
+			const elapsedCycles = Math.ceil((now - endsAt + 1) / cycle);
+			const next = { ...settings, endsAt: endsAt + elapsedCycles * cycle, cycles: (settings.cycles ?? 0) + elapsedCycles };
 			this.settings.set(id, next);
 			if (visible) await visible.setSettings(next);
 			if (fresh) {
@@ -186,7 +197,8 @@ export class GameTimer extends SingletonAction<TimerSettings> {
 
 		const settings = this.settings.get(action.id) ?? {};
 		const now = Date.now();
-		const image = toDataUrl(renderTimerKey(settings, now));
+		const style = { title: this.titles.get(action.id), textOnTop: settings.textOnTop === true };
+		const image = toDataUrl(renderTimerKey(settings, now, style));
 		if (this.images.get(action.id) !== image) {
 			this.images.set(action.id, image);
 			await action.setImage(image);
@@ -216,58 +228,79 @@ function isRepeating(settings: TimerSettings): boolean {
 	return preset(settings).repeat;
 }
 
-function label(settings: TimerSettings): string {
-	return settings.label?.trim() || preset(settings).label;
+/** The Stream Deck title, else the label of older versions, else the preset name. */
+function label(settings: TimerSettings, style: KeyStyle): string {
+	return style.title ?? (settings.label?.trim() || preset(settings).label);
 }
 
 /**
- * Draws the key of a timer at a given time.
+ * Draws the key of a timer at a given time. Once a non-repeating timer is over, it counts the time elapsed since its
+ * end as a negative value.
  */
-export function renderTimerKey(settings: TimerSettings, now: number): string {
-	const icon = timerIcon(preset(settings).id);
+export function renderTimerKey(settings: TimerSettings, now: number, style: KeyStyle = {}): string {
 	const total = duration(settings);
+	const name = label(settings, style);
+	const icon = timerIcon(preset(settings).id);
+	// Number of completed cycles of a repeating timer, in the top-right corner.
+	const cycles = settings.cycles ? text(138, 18, `×${settings.cycles}`, 15, COLORS.gold, "bold", "end") : "";
 
 	switch (getPhase(settings, now)) {
 		case "idle":
-			return keySvg(
-				place(icon, 72, 48, 1.15) +
-					text(72, 106, label(settings), 20) +
-					text(72, 130, formatDuration(total), 16, COLORS.muted, "normal"),
+			return composeKey(
+				{
+					visual: place(icon, 72, 48, 1.15) + cycles,
+					info: text(72, 106, name, 20) + text(72, 130, formatDuration(total), 16, COLORS.muted, "normal"),
+					split: 84,
+				},
+				style,
 			);
 
 		case "running": {
 			const remaining = (settings.endsAt! - now) / 1000;
 			const warning = remaining <= 60;
-			return keySvg(
-				place(icon, 72, 40, 0.9) +
-					text(72, 98, formatDuration(remaining), 30, warning ? COLORS.cooking : COLORS.text) +
-					text(72, 120, label(settings), 15, COLORS.teal) +
-					progressBar(1 - remaining / total, warning ? COLORS.cooking : COLORS.teal),
+			return composeKey(
+				{
+					visual: place(icon, 72, 40, 0.9) + cycles,
+					info: text(72, 98, formatDuration(remaining), 30, warning ? COLORS.cooking : COLORS.text) + text(72, 120, name, 15, COLORS.teal),
+					bar: progressBar(1 - remaining / total, warning ? COLORS.cooking : COLORS.teal),
+					split: 66,
+				},
+				style,
 			);
 		}
 
 		case "paused": {
 			const remaining = settings.remainingMs! / 1000;
-			return keySvg(
-				place(icon, 72, 40, 0.9) +
-					text(72, 98, formatDuration(remaining), 30, COLORS.muted) +
-					text(72, 120, "PAUSE", 15, COLORS.gold) +
-					progressBar(1 - remaining / total, COLORS.muted),
+			return composeKey(
+				{
+					visual: place(icon, 72, 40, 0.9) + cycles,
+					info: text(72, 98, formatDuration(remaining), 30, COLORS.muted) + text(72, 120, style.title ?? "PAUSE", 15, COLORS.gold),
+					bar: progressBar(1 - remaining / total, COLORS.muted),
+					split: 66,
+				},
+				style,
 			);
 		}
 
 		case "finished": {
-			const flash = Math.floor(now / 500) % 2 === 0;
-			return keySvg(
-				place(icon, 72, 48, 1.15) + text(72, 106, label(settings), 20) + text(72, 130, "TERMINÉ", 16, COLORS.danger),
-				flash ? "#4a1410" : COLORS.sea,
+			const overtime = now - settings.endsAt!;
+			const flash = overtime < FLASH_MS && Math.floor(now / 500) % 2 === 0;
+			return composeKey(
+				{
+					visual: place(icon, 72, 40, 0.9) + cycles,
+					info: text(72, 98, `-${formatDuration(overtime / 1000, Math.floor)}`, 30, COLORS.danger) + text(72, 120, name, 15, COLORS.danger),
+					bar: progressBar(1, COLORS.danger),
+					split: 66,
+					background: flash ? "#4a1410" : "#2a0f0c",
+				},
+				style,
 			);
 		}
 	}
 }
 
-function formatDuration(seconds: number): string {
-	const total = Math.max(0, Math.ceil(seconds));
+function formatDuration(seconds: number, round: (value: number) => number = Math.ceil): string {
+	const total = Math.max(0, round(seconds));
 	const h = Math.floor(total / 3600);
 	const m = Math.floor((total % 3600) / 60);
 	const s = String(total % 60).padStart(2, "0");
@@ -279,7 +312,9 @@ function formatDuration(seconds: number): string {
  */
 type TimerSettings = SoundSettings & {
 	preset?: string;
+	/** Label of versions before 0.3; the Stream Deck title is used instead now. */
 	label?: string;
+	textOnTop?: boolean;
 	/** Custom duration in minutes; the property inspector stores it as a string. */
 	minutes?: number | string;
 	/** "yes" / "no", or empty to follow the preset. */
@@ -288,4 +323,6 @@ type TimerSettings = SoundSettings & {
 	endsAt?: number;
 	/** Remaining time (ms) of a paused timer. */
 	remainingMs?: number;
+	/** Completed cycles of a repeating timer. */
+	cycles?: number;
 };

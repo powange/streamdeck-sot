@@ -1,9 +1,18 @@
-import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, SingletonAction, type WillAppearEvent, type WillDisappearEvent } from "@elgato/streamdeck";
+import {
+	action,
+	type Action,
+	type DidReceiveSettingsEvent,
+	type KeyDownEvent,
+	SingletonAction,
+	type TitleParametersDidChangeEvent,
+	type WillAppearEvent,
+	type WillDisappearEvent,
+} from "@elgato/streamdeck";
 
 import { foodIcon } from "../food-icons";
 import { type Food, getFood } from "../foods";
 import { playSound, type SoundSettings } from "../sound";
-import { COLORS, keySvg, place, progressBar, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, type KeyStyle, place, progressBar, text, toDataUrl } from "../svg";
 
 /** How often running timers are redrawn. */
 const TICK_MS = 250;
@@ -33,6 +42,7 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 	private readonly timers = new Map<string, RunningTimer>();
 	/** Last image sent per action, to avoid re-sending identical frames. */
 	private readonly images = new Map<string, string>();
+	private readonly titles = new Map<string, string | undefined>();
 	private ticker: ReturnType<typeof setInterval> | undefined;
 
 	override async onWillAppear(ev: WillAppearEvent<CookingSettings>): Promise<void> {
@@ -49,6 +59,11 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 	override async onDidReceiveSettings(ev: DidReceiveSettingsEvent<CookingSettings>): Promise<void> {
 		this.settings.set(ev.action.id, ev.payload.settings);
 		this.images.delete(ev.action.id);
+		await this.render(ev.action);
+	}
+
+	override async onTitleParametersDidChange(ev: TitleParametersDidChangeEvent<CookingSettings>): Promise<void> {
+		this.titles.set(ev.action.id, cleanTitle(ev.payload.title));
 		await this.render(ev.action);
 	}
 
@@ -135,7 +150,9 @@ export class CookingTimer extends SingletonAction<CookingSettings> {
 		const timer = this.timers.get(action.id);
 		const elapsed = timer ? (Date.now() - timer.startedAt) / 1000 : undefined;
 
-		const image = toDataUrl(renderCookingKey(food, elapsed));
+		const settings = this.settings.get(action.id) ?? {};
+		const style = { title: this.titles.get(action.id), textOnTop: settings.textOnTop === true };
+		const image = toDataUrl(renderCookingKey(food, elapsed, style));
 		if (this.images.get(action.id) !== image) {
 			this.images.set(action.id, image);
 			await action.setImage(image);
@@ -152,23 +169,30 @@ function getPhase(food: Food, elapsed: number | undefined): Phase {
 
 /**
  * Draws the key for a food, given the seconds elapsed since it was put on the fire (`undefined` when idle).
+ * A title replaces the food name, and the status line while cooking (except the "remove it" warning).
  */
-export function renderCookingKey(food: Food, elapsed: number | undefined): string {
+export function renderCookingKey(food: Food, elapsed: number | undefined, style: KeyStyle = {}): string {
 	switch (getPhase(food, elapsed)) {
 		case "idle":
-			return keySvg(
-				place(foodIcon(food.id, "raw"), 72, 50, 1.25) +
-					text(72, 106, food.label, 22) +
-					text(72, 130, formatDuration(food.cookSeconds), 16, COLORS.muted, "normal"),
+			return composeKey(
+				{
+					visual: place(foodIcon(food.id, "raw"), 72, 50, 1.25),
+					info: text(72, 106, style.title ?? food.label, 22) + text(72, 130, formatDuration(food.cookSeconds), 16, COLORS.muted, "normal"),
+					split: 84,
+				},
+				style,
 			);
 
 		case "cooking": {
 			const remaining = food.cookSeconds - elapsed!;
-			return keySvg(
-				place(foodIcon(food.id, "raw"), 72, 40) +
-					text(72, 98, formatDuration(remaining), 34) +
-					text(72, 120, "CUISSON", 15, COLORS.cooking) +
-					progressBar(elapsed! / food.cookSeconds, COLORS.cooking),
+			return composeKey(
+				{
+					visual: place(foodIcon(food.id, "raw"), 72, 40),
+					info: text(72, 98, formatDuration(remaining), 34) + text(72, 120, style.title ?? "CUISSON", 15, COLORS.cooking),
+					bar: progressBar(elapsed! / food.cookSeconds, COLORS.cooking),
+					split: 66,
+				},
+				style,
 			);
 		}
 
@@ -176,19 +200,30 @@ export function renderCookingKey(food: Food, elapsed: number | undefined): strin
 			const remaining = food.burnSeconds - elapsed!;
 			const warning = remaining <= WARNING_SECONDS;
 			const flash = warning && Math.floor(elapsed! * 2) % 2 === 0;
-			return keySvg(
-				place(foodIcon(food.id, "cooked"), 72, 40) +
-					text(72, 98, formatDuration(remaining), 34, warning ? COLORS.danger : COLORS.text) +
-					text(72, 120, warning ? "RETIRE !" : "CUIT !", 15, warning ? COLORS.danger : COLORS.cooked) +
-					progressBar(remaining / (food.burnSeconds - food.cookSeconds), warning ? COLORS.danger : COLORS.cooked),
-				flash ? "#4a1410" : COLORS.sea,
+			const status = warning ? "RETIRE !" : (style.title ?? "CUIT !");
+			return composeKey(
+				{
+					visual: place(foodIcon(food.id, "cooked"), 72, 40),
+					info:
+						text(72, 98, formatDuration(remaining), 34, warning ? COLORS.danger : COLORS.text) +
+						text(72, 120, status, 15, warning ? COLORS.danger : COLORS.cooked),
+					bar: progressBar(remaining / (food.burnSeconds - food.cookSeconds), warning ? COLORS.danger : COLORS.cooked),
+					split: 66,
+					background: flash ? "#4a1410" : COLORS.sea,
+				},
+				style,
 			);
 		}
 
 		case "burnt":
-			return keySvg(
-				place(foodIcon(food.id, "burnt"), 72, 50, 1.25) + text(72, 112, "BRÛLÉ", 24, COLORS.danger),
-				COLORS.burnt,
+			return composeKey(
+				{
+					visual: place(foodIcon(food.id, "burnt"), 72, 50, 1.25),
+					info: text(72, 112, "BRÛLÉ", 24, COLORS.danger) + (style.title ? text(72, 134, style.title, 14, COLORS.muted, "normal") : ""),
+					split: 86,
+					background: COLORS.burnt,
+				},
+				style,
 			);
 	}
 }
@@ -211,6 +246,7 @@ function positive(value: unknown): number | undefined {
  * them as strings.
  */
 type CookingSettings = SoundSettings & {
+	textOnTop?: boolean;
 	food?: string;
 	cookSeconds?: number | string;
 	burnSeconds?: number | string;
