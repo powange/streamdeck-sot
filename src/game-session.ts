@@ -14,12 +14,26 @@ const MAX_ATTEMPTS = 5;
 
 const pluginStartedAt = Date.now();
 
+const launchListeners = new Set<() => void | Promise<void>>();
+const closeListeners = new Set<() => void | Promise<void>>();
+
+/** Called each time Sea of Thieves starts (including when it was already running at plugin startup). */
+export function onGameLaunched(listener: () => void | Promise<void>): void {
+	launchListeners.add(listener);
+}
+
+/** Called each time Sea of Thieves is closed. */
+export function onGameClosed(listener: () => void | Promise<void>): void {
+	closeListeners.add(listener);
+}
+
 /**
  * Records the balance each time the game starts, so balance keys can show the gains of the current game session.
  */
 export function watchGameSessions(): void {
 	streamDeck.system.onApplicationDidLaunch(async (ev) => {
 		if (ev.application.toLowerCase() !== GAME_EXECUTABLE.toLowerCase()) return;
+		for (const listener of launchListeners) await listener();
 
 		// After a plugin restart (e.g. an update) while playing, keep the session that is still running.
 		const session = (await getGlobalSettings()).gameSession;
@@ -31,6 +45,7 @@ export function watchGameSessions(): void {
 
 	streamDeck.system.onApplicationDidTerminate(async (ev) => {
 		if (ev.application.toLowerCase() !== GAME_EXECUTABLE.toLowerCase()) return;
+		for (const listener of closeListeners) await listener();
 
 		const session = (await getGlobalSettings()).gameSession;
 		if (session && session.endedAt === undefined) {

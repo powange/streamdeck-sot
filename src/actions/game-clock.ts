@@ -2,17 +2,27 @@ import {
 	action,
 	type Action,
 	type DidReceiveSettingsEvent,
+	type KeyDownEvent,
+	type KeyUpEvent,
 	SingletonAction,
 	type TitleParametersDidChangeEvent,
 	type WillAppearEvent,
 	type WillDisappearEvent,
 } from "@elgato/streamdeck";
 
+import { counterDay, getDayCounter, pauseCountersForGame, resetDayCounter, resumeCountersForGame, toggleDayCounter } from "../day-counter";
+import { onGameClosed, onGameLaunched } from "../game-session";
 import { type GameTime, getGameTime, PERIOD_COLORS, PERIOD_LABELS, periodIcon, periodRanges } from "../game-clock";
 import { cleanTitle, COLORS, composeKey, KEY_SIZE, type KeyStyle, place, text, toDataUrl } from "../svg";
 
 /** One real second is one in-game minute. */
 const TICK_MS = 1000;
+
+/** How long the key must be held to reset the day counter. */
+const LONG_PRESS_MS = 600;
+
+/** State of the day counter shown on a key. */
+type CounterState = { day: number; paused: boolean };
 
 const NIGHT_BACKGROUND = "#07121a";
 
@@ -76,16 +86,19 @@ function borderPoint(fraction: number): [number, number] {
 }
 
 /**
- * Day of the cycle in a gold pill, readable from a distance.
+ * Day in a pill, readable from a distance: outlined for the day of the game cycle, filled gold for the player's day
+ * counter, filled grey when that counter is paused.
  */
-function dayBadge(day: number): string {
+function dayBadge(day: number, style: "cycle" | "counting" | "paused"): string {
 	const label = `Jour ${day}`;
 	const width = label.length * 8.6 + 12;
 	const right = KEY_SIZE - BORDER_INSET - 6;
-	return (
-		`<rect x="${(right - width).toFixed(1)}" y="15" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${COLORS.gold}"/>` +
-		text(right - width / 2, 31, label, 15, COLORS.ink)
-	);
+	const x = (right - width).toFixed(1);
+	const pill =
+		style === "cycle"
+			? `<rect x="${x}" y="16" width="${(width - 2).toFixed(1)}" height="19" rx="9.5" fill="none" stroke="${COLORS.gold}" stroke-width="2"/>`
+			: `<rect x="${x}" y="15" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${style === "paused" ? COLORS.muted : COLORS.gold}"/>`;
+	return pill + text(right - width / 2, 31, label, 15, style === "cycle" ? COLORS.gold : COLORS.ink);
 }
 
 /**
@@ -105,13 +118,46 @@ function clockBorder(dayProgress: number): string {
 
 /**
  * In-game clock: time, period of the day (sunrise, morning, afternoon, sunset, night) and day of the 30-day cycle,
- * computed locally from the real time.
+ * computed locally from the real time. Press to count the in-game days spent playing (press again to pause / resume,
+ * hold to reset); the count pauses while the game is closed.
  */
 @action({ UUID: "com.powange.seaofthieves.game-clock" })
 export class GameClock extends SingletonAction<ClockSettings> {
 	private readonly settings = new Map<string, ClockSettings>();
 	private readonly titles = new Map<string, string | undefined>();
+	private readonly presses = new Map<string, ReturnType<typeof setTimeout>>();
 	private ticker: ReturnType<typeof setInterval> | undefined;
+
+	constructor() {
+		super();
+		onGameClosed(pauseCountersForGame);
+		onGameLaunched(resumeCountersForGame);
+	}
+
+	override onKeyDown(ev: KeyDownEvent<ClockSettings>): void {
+		const { action } = ev;
+		this.presses.set(
+			action.id,
+			setTimeout(async () => {
+				this.presses.delete(action.id);
+				await resetDayCounter(action.id);
+				await this.render(action);
+				if (action.isKey()) await action.showOk();
+			}, LONG_PRESS_MS),
+		);
+	}
+
+	override async onKeyUp(ev: KeyUpEvent<ClockSettings>): Promise<void> {
+		const pending = this.presses.get(ev.action.id);
+		if (pending === undefined) {
+			// The long press already reset the counter.
+			return;
+		}
+		clearTimeout(pending);
+		this.presses.delete(ev.action.id);
+		await toggleDayCounter(ev.action.id);
+		await this.render(ev.action);
+	}
 
 	override async onWillAppear(ev: WillAppearEvent<ClockSettings>): Promise<void> {
 		this.settings.set(ev.action.id, ev.payload.settings);
@@ -147,21 +193,25 @@ export class GameClock extends SingletonAction<ClockSettings> {
 		if (!action.isKey()) return;
 		const settings = this.settings.get(action.id) ?? {};
 		const style = { title: this.titles.get(action.id), textOnTop: settings.textOnTop === true };
-		await action.setImage(toDataUrl(renderClockKey(getGameTime(), style)));
+		const counter = await getDayCounter(action.id);
+		await action.setImage(toDataUrl(renderClockKey(getGameTime(), style, counter && counterDay(counter))));
 	}
 }
 
 /**
- * Draws the in-game clock; a Stream Deck title replaces the period name.
+ * Draws the in-game clock; a Stream Deck title replaces the period name. With a day counter, the pill shows the
+ * counted day instead of the day of the game cycle.
  */
-export function renderClockKey(time: GameTime, style: KeyStyle = {}): string {
+export function renderClockKey(time: GameTime, style: KeyStyle = {}, counter?: CounterState): string {
 	const night = time.period === "night";
 	const key = composeKey(
 		{
-			visual: place(periodIcon(time.period), 40, 42, 0.7) + dayBadge(time.day),
+			visual:
+				place(periodIcon(time.period), 40, 42, 0.7) +
+				(counter ? dayBadge(counter.day, counter.paused ? "paused" : "counting") : dayBadge(time.day, "cycle")),
 			info:
 				text(72, 98, `${time.hours}:${String(time.minutes).padStart(2, "0")}`, 32) +
-				text(72, 120, style.title ?? PERIOD_LABELS[time.period], 13, COLORS.muted, "normal"),
+				text(72, 120, style.title ?? (counter?.paused ? "En pause" : PERIOD_LABELS[time.period]), 13, COLORS.muted, "normal"),
 			split: 66,
 			background: night ? NIGHT_BACKGROUND : COLORS.sea,
 		},

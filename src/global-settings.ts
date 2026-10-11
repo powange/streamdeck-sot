@@ -11,6 +11,20 @@ export type GlobalSettings = {
 	xblApiKey?: string;
 	/** Balance recorded when the game was last launched. */
 	gameSession?: GameSession;
+	/** In-game day counters of the in-game time keys, by action id. */
+	dayCounters?: Record<string, DayCounter>;
+};
+
+/**
+ * Counter of in-game days: `startedAt` while counting, `elapsedMs` while paused.
+ */
+export type DayCounter = {
+	/** Timestamp (ms) at which the counter would have started had it never been paused. */
+	startedAt?: number;
+	/** Time (ms) counted so far, while paused. */
+	elapsedMs?: number;
+	/** Paused because the game was closed: resumes when it starts again. */
+	pausedByGame?: boolean;
 };
 
 export type GameSession = {
