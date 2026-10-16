@@ -1,8 +1,8 @@
 import { action } from "@elgato/streamdeck";
 
 import { type ProgressItem } from "../api/progress";
+import { onTokenChanged } from "../api/rat-token";
 import { clearProfile, getSeasonProgress } from "../api/sot";
-import { onGlobalSettingsChanged } from "../global-settings";
 import { seasonIcon } from "../progress-icons";
 import { ProgressAction, type ProgressSettings } from "./progress-action";
 
@@ -16,15 +16,14 @@ export class SeasonProgressAction extends ProgressAction<ProgressSettings> {
 	protected override readonly fallbackIcon = seasonIcon();
 	protected override readonly placeholder: [string, string] = ["Aucune", "saison"];
 
-	private lastToken: string | undefined;
+	protected override readonly usesRatToken = true;
 
 	constructor() {
 		super();
-		onGlobalSettingsChanged(async (settings) => {
-			if (settings.ratCookie === this.lastToken) return;
-			this.lastToken = settings.ratCookie;
+		onTokenChanged(async () => {
 			clearProfile();
 			await this.refreshAll();
+			await this.sendTokenInfo();
 		});
 	}
 

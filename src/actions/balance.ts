@@ -2,6 +2,7 @@ import { action, type Action, type DidReceiveSettingsEvent, type KeyDownEvent, t
 
 import { type ProgressItem } from "../api/progress";
 import { loadBundledImage } from "../bundled-images";
+import { onTokenChanged } from "../api/rat-token";
 import { clearProfile, getBalance } from "../api/sot";
 import { startGameSession } from "../game-session";
 import { getGlobalSettings, onGlobalSettingsChanged } from "../global-settings";
@@ -39,19 +40,20 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 	protected override readonly placeholder: [string, string] = ["Appui long", "pour démarrer"];
 
 	private readonly presses = new Map<string, ReturnType<typeof setTimeout>>();
-	private lastToken: string | undefined;
+	protected override readonly usesRatToken = true;
 	private lastGameSession: number | undefined;
 
 	constructor() {
 		super();
+		onTokenChanged(async () => {
+			clearProfile();
+			await this.refreshAll();
+			await this.sendTokenInfo();
+		});
+		// A new game session changes the gains shown by "since game launch" keys.
 		onGlobalSettingsChanged(async (settings) => {
 			const gameSession = settings.gameSession?.startedAt;
-			if (settings.ratCookie !== this.lastToken) {
-				this.lastToken = settings.ratCookie;
-				clearProfile();
-			} else if (gameSession === this.lastGameSession) {
-				return;
-			}
+			if (gameSession === this.lastGameSession) return;
 			this.lastGameSession = gameSession;
 			await this.refreshAll();
 		});

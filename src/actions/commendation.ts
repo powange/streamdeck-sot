@@ -2,8 +2,8 @@ import streamDeck, { action, type DidReceiveSettingsEvent, type SendToPluginEven
 import type { JsonValue } from "@elgato/utils";
 
 import { type ProgressItem } from "../api/progress";
+import { onTokenChanged } from "../api/rat-token";
 import { clearProfile, type Commendation, getCommendations } from "../api/sot";
-import { onGlobalSettingsChanged } from "../global-settings";
 import { medalIcon } from "../progress-icons";
 import { errorMessage, type ListItem, ProgressAction, type ProgressSettings } from "./progress-action";
 
@@ -21,16 +21,15 @@ export class CommendationProgress extends ProgressAction<CommendationSettings> {
 	protected override readonly fallbackIcon = medalIcon();
 	protected override readonly placeholder: [string, string] = ["Choisir une", "commendation"];
 
-	private lastToken: string | undefined;
+	protected override readonly usesRatToken = true;
 
 	constructor() {
 		super();
-		onGlobalSettingsChanged(async (settings) => {
-			if (settings.ratCookie === this.lastToken) return;
-			this.lastToken = settings.ratCookie;
+		onTokenChanged(async () => {
 			clearProfile();
 			await this.refreshAll();
 			await this.sendAllLists();
+			await this.sendTokenInfo();
 		});
 	}
 

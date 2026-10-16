@@ -20,6 +20,8 @@ export type ProgressItem = {
 	valueText?: string;
 	/** Hides the progress bar, for plain values. */
 	noBar?: boolean;
+	/** Warning in the top-left corner, e.g. the login expiring soon. */
+	warning?: string;
 };
 
 export type ApiErrorKind = "missing-credentials" | "auth" | "rate-limit" | "http";

@@ -115,12 +115,15 @@ export function label(value: string, color: string = COLORS.muted, y: number = G
 }
 
 /**
- * Badge in a rounded pill, right-aligned on `right` (top-right corner of the key by default).
+ * Badge in a rounded pill: in the top-right corner by default, or aligned on `left`.
  */
-export function pill(value: string, right = KEY_SIZE - 6, top = 4, fill: string = COLORS.gold, color: string = COLORS.ink): string {
+export function pill(
+	value: string,
+	{ left, right = KEY_SIZE - 6, top = 4, fill = COLORS.gold, color = COLORS.ink }: { left?: number; right?: number; top?: number; fill?: string; color?: string } = {},
+): string {
 	const size = 15;
 	const width = value.length * size * CHAR_WIDTH + 12;
-	const x = right - width;
+	const x = left ?? right - width;
 	return (
 		`<rect x="${x.toFixed(1)}" y="${top}" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${fill}"/>` +
 		text(x + width / 2, top + 16, value, size, color)

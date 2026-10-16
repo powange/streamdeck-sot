@@ -1,5 +1,5 @@
-import { getGlobalSettings } from "../global-settings";
 import { ApiError, CachedLoader, type ProgressItem, toNumber } from "./progress";
+import { currentToken, saveRenewedToken, tokenExpiry } from "./rat-token";
 
 /**
  * Unofficial www.seaofthieves.com profile API, authenticated with the `rat` cookie of a logged-in browser session.
@@ -186,9 +186,14 @@ export function parseSeason(json: Season[]): SeasonProgress | undefined {
  * Calls an endpoint of the profile API (`reputation`, `balance`...) with the `rat` cookie.
  */
 export async function fetchProfile<T>(endpoint: string): Promise<T> {
-	const token = normalizeToken((await getGlobalSettings()).ratCookie);
+	const token = await currentToken();
 	if (!token) {
 		throw new ApiError("missing-credentials", "Token RAT manquant");
+	}
+	const expiry = tokenExpiry(token);
+	if (expiry !== undefined && expiry <= Date.now()) {
+		// No point in asking the site with an expired token.
+		throw new ApiError("auth", "Token RAT expiré");
 	}
 
 	const response = await fetch(`${PROFILE_URL}/${endpoint}`, {
@@ -200,6 +205,15 @@ export async function fetchProfile<T>(endpoint: string): Promise<T> {
 			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
 		},
 	});
+
+	// The site may send back a renewed token: keep it, so the session lasts longer.
+	const renewed = response.headers
+		.getSetCookie()
+		.map((cookie) => /^rat=([^;]+)/.exec(cookie)?.[1])
+		.find((value) => value && value !== token);
+	if (renewed) {
+		await saveRenewedToken(renewed);
+	}
 
 	if (response.status === 401 || response.status === 403) {
 		throw new ApiError("auth", `Token RAT refusé (HTTP ${response.status})`);
@@ -303,13 +317,4 @@ function toItem(factionKey: string, emblem: Emblem): ProgressItem {
 		completed,
 		imageUrl: emblem.image,
 	};
-}
-
-/**
- * Accepts the raw cookie value, or a pasted `rat=...` / full cookie header.
- */
-function normalizeToken(value: string | undefined): string | undefined {
-	if (!value) return undefined;
-	const match = /(?:^|;\s*)rat=([^;]+)/.exec(value.trim());
-	return (match ? match[1] : value).trim() || undefined;
 }

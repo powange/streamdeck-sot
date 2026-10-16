@@ -10,6 +10,7 @@ import streamDeck, {
 import type { JsonObject } from "@elgato/utils";
 
 import { ApiError, type ProgressItem } from "../api/progress";
+import { tokenInfo, tokenWarning } from "../api/rat-token";
 import { cleanTitle, COLORS, composeKey, fitText, GRID, image, type KeyStyle, label, pill, place, progressBar, text, toDataUrl } from "../svg";
 
 export type ProgressSettings = JsonObject & {
@@ -32,6 +33,8 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 	protected abstract readonly placeholder: [string, string];
 	/** Minimum automatic refresh interval, to respect API limits. */
 	protected readonly minRefreshMinutes: number = 5;
+	/** Whether the action reads the seaofthieves.com profile, and so depends on the RAT token. */
+	protected readonly usesRatToken: boolean = false;
 
 	private readonly settings = new Map<string, T>();
 	private readonly refreshTimers = new Map<string, ReturnType<typeof setInterval>>();
@@ -71,6 +74,19 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 	override async onTitleParametersDidChange(ev: TitleParametersDidChangeEvent<T>): Promise<void> {
 		this.titles.set(ev.action.id, cleanTitle(ev.payload.title));
 		await this.refresh(ev.action, false);
+	}
+
+	override async onPropertyInspectorDidAppear(): Promise<void> {
+		await this.sendTokenInfo();
+	}
+
+	/**
+	 * Shows the validity of the RAT token in the property inspector, if it is open on one of this action's keys.
+	 */
+	protected async sendTokenInfo(): Promise<void> {
+		if (this.usesRatToken && streamDeck.ui.action?.manifestId === this.manifestId) {
+			await streamDeck.ui.sendToPropertyInspector({ event: "tokenInfo", text: await tokenInfo() });
+		}
 	}
 
 	override async onKeyDown(ev: KeyDownEvent<T>): Promise<void> {
@@ -156,6 +172,9 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 				return false;
 			}
 
+			if (this.usesRatToken) {
+				item.warning ??= await tokenWarning();
+			}
 			const picture = item.imageData ?? (item.imageUrl ? await loadImage(item.imageUrl) : undefined);
 			await action.setImage(toDataUrl(renderProgressKey(item, picture, this.fallbackIcon, style)));
 			return true;
@@ -220,7 +239,10 @@ export function renderProgressKey(item: ProgressItem, picture: string | undefine
 
 	return composeKey(
 		{
-			visual: keyPicture(picture, item.icon ?? fallbackIcon) + (item.badge ? pill(item.badge) : ""),
+			visual:
+				keyPicture(picture, item.icon ?? fallbackIcon) +
+				(item.badge ? pill(item.badge) : "") +
+				(item.warning ? pill(item.warning, { left: 6, fill: COLORS.cooking }) : ""),
 			info: fitText(72, GRID.valueY, value, GRID.valueSize, item.completed ? COLORS.cooked : COLORS.text) + (name ? label(name) : ""),
 			bar: item.noBar ? undefined : progressBar(ratio, color),
 			split: GRID.split,

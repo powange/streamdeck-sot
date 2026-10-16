@@ -21,6 +21,8 @@
 			<sdpi-password global setting="ratCookie" placeholder="Cookie « rat » de seaofthieves.com"></sdpi-password>
 		</sdpi-item>
 
+		<p id="token-info" class="help" style="margin: 0 0 8px 0"></p>
+
 		<sdpi-item label="Faction">
 			<sdpi-select setting="itemId" datasource="getFactionLevels" hot-reload show-refresh loading="Chargement…" placeholder="Choisir une faction" label-setting="itemLabel"></sdpi-select>
 		</sdpi-item>
@@ -49,5 +51,14 @@
 			<p>Le token expire au bout de ~14 jours : le bouton affiche alors « Connexion expirée ». Il donne accès à ton compte seaofthieves.com, ne le partage pas.</p>
 		</details>
 
+		<script>
+			// Validity of the RAT token, sent by the plugin.
+			SDPIComponents.streamDeckClient.sendToPropertyInspector.subscribe((message) => {
+				const payload = message && message.payload;
+				if (payload && payload.event === "tokenInfo") {
+					document.getElementById("token-info").textContent = payload.text || "";
+				}
+			});
+		</script>
 	</body>
 </html>

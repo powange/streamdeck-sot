@@ -3,8 +3,8 @@ import type { JsonValue } from "@elgato/utils";
 
 import { type ProgressItem } from "../api/progress";
 import { loadBundledImage } from "../bundled-images";
+import { onTokenChanged } from "../api/rat-token";
 import { clearProfile, type FactionLevel, getFactionLevels } from "../api/sot";
-import { onGlobalSettingsChanged } from "../global-settings";
 import { factionIcon } from "../progress-icons";
 import { errorMessage, type ListItem, ProgressAction, type ProgressSettings } from "./progress-action";
 
@@ -17,16 +17,15 @@ export class FactionLevelProgress extends ProgressAction<ProgressSettings> {
 	protected override readonly fallbackIcon = factionIcon("");
 	protected override readonly placeholder: [string, string] = ["Choisir une", "faction"];
 
-	private lastToken: string | undefined;
+	protected override readonly usesRatToken = true;
 
 	constructor() {
 		super();
-		onGlobalSettingsChanged(async (settings) => {
-			if (settings.ratCookie === this.lastToken) return;
-			this.lastToken = settings.ratCookie;
+		onTokenChanged(async () => {
 			clearProfile();
 			await this.refreshAll();
 			await this.sendList("getFactionLevels", await buildList());
+			await this.sendTokenInfo();
 		});
 	}
 
