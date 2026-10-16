@@ -7,6 +7,8 @@ import streamDeck from "@elgato/streamdeck";
 export type GlobalSettings = {
 	/** Value of the `rat` cookie of www.seaofthieves.com. */
 	ratCookie?: string;
+	/** Timestamp (ms) of the last time the site sent back a renewed `rat` cookie. */
+	ratRenewedAt?: number;
 	/** OpenXBL API key (https://xbl.io). */
 	xblApiKey?: string;
 	/** Balance recorded when the game was last launched. */

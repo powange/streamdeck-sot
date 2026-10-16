@@ -38,7 +38,7 @@ Rare ne fournit pas d'API publique : le plugin utilise l'API interne du site (`/
 2. F12 → **Application** → **Cookies** → `https://www.seaofthieves.com` → copie la valeur du cookie `rat`.
 3. Colle-la dans le champ « Token RAT » des réglages d'un bouton Commendation (elle est partagée par tous les boutons).
 
-Le token expire au bout d'environ 14 jours : sa date d'expiration s'affiche sous le champ « Token RAT », et les boutons montrent une pastille orange (« 2 j ») dans les 3 derniers jours, puis « Connexion expirée ». Si le site renvoie un token renouvelé, le plugin l'enregistre automatiquement à la place de l'ancien. Il donne accès à ton compte sur le site : ne le partage pas. Il est stocké localement par Stream Deck.
+Le site renvoie un token renouvelé à chaque actualisation : le plugin l'enregistre automatiquement à la place de l'ancien, et l'heure du dernier renouvellement s'affiche sous le champ « Token RAT ». Le token est chiffré, sa date d'expiration est donc illisible ; s'il finit par expirer, les boutons affichent « Connexion expirée » et il faut recoller un cookie. Il donne accès à ton compte sur le site : ne le partage pas. Il est stocké localement par Stream Deck.
 
 ### Connexion Xbox (OpenXBL)
 

@@ -21,7 +21,8 @@ export async function currentToken(): Promise<string | undefined> {
 }
 
 /**
- * Expiry (ms timestamp) read from the `exp` claim of the token, which is a JWT; `undefined` if it cannot be read.
+ * Expiry (ms timestamp) read from the `exp` claim of a JWT; `undefined` if it cannot be read. The current RAT tokens are
+ * encrypted JWE (5 segments), whose claims only Rare can read: their expiry is unknown.
  */
 export function tokenExpiry(token: string | undefined): number | undefined {
 	const payload = token?.split(".")[1];
@@ -45,19 +46,29 @@ export async function tokenWarning(now = Date.now()): Promise<string | undefined
 }
 
 /**
- * Validity of the token, for the property inspector.
+ * Validity of the token, for the property inspector: its expiry when readable, otherwise when the site last renewed it.
  */
 export async function tokenInfo(now = Date.now()): Promise<string> {
-	const token = await currentToken();
+	const settings = await getGlobalSettings();
+	const token = normalizeToken(settings.ratCookie);
 	if (!token) return "";
-	const expiry = tokenExpiry(token);
-	if (expiry === undefined) return "Date d'expiration du token inconnue.";
 
-	const date = new Date(expiry);
-	const when = `${pad(date.getDate())}/${pad(date.getMonth() + 1)} à ${date.getHours()}:${pad(date.getMinutes())}`;
-	if (expiry <= now) return `Token expiré le ${when} : colle un nouveau cookie « rat ».`;
-	const days = Math.floor((expiry - now) / DAY_MS);
-	return `Token valable jusqu'au ${when} (${days < 1 ? "moins d'un jour" : `encore ${days} j`}).`;
+	const expiry = tokenExpiry(token);
+	if (expiry !== undefined) {
+		if (expiry <= now) return `Token expiré le ${formatDate(expiry)} : colle un nouveau cookie « rat ».`;
+		const days = Math.floor((expiry - now) / DAY_MS);
+		return `Token valable jusqu'au ${formatDate(expiry)} (${days < 1 ? "moins d'un jour" : `encore ${days} j`}).`;
+	}
+
+	// Encrypted token: the expiry is unknown, but the site renews it while the keys refresh.
+	return settings.ratRenewedAt
+		? `Token renouvelé par le site le ${formatDate(settings.ratRenewedAt)}. Il reste valide tant que les boutons s'actualisent régulièrement.`
+		: "Token chiffré : sa date d'expiration est illisible. Il sera renouvelé par le site à la prochaine actualisation.";
+}
+
+function formatDate(timestamp: number): string {
+	const date = new Date(timestamp);
+	return `${pad(date.getDate())}/${pad(date.getMonth() + 1)} à ${date.getHours()}:${pad(date.getMinutes())}`;
 }
 
 function pad(value: number): string {
@@ -71,10 +82,10 @@ const renewedTokens = new Set<string>();
  * Saves a token sent back by the site (Set-Cookie), replacing the current one without reloading the keys.
  */
 export async function saveRenewedToken(token: string): Promise<void> {
+	renewedTokens.clear();
 	renewedTokens.add(token);
-	await updateGlobalSettings({ ratCookie: token });
-	const expiry = tokenExpiry(token);
-	streamDeck.logger.info(`RAT token renewed by the site; new expiry: ${expiry ? new Date(expiry).toISOString() : "unknown"}`);
+	await updateGlobalSettings({ ratCookie: token, ratRenewedAt: Date.now() });
+	streamDeck.logger.info("RAT token renewed by the site");
 }
 
 const listeners = new Set<() => void | Promise<void>>();
