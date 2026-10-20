@@ -2,6 +2,8 @@
 
 Plugin Stream Deck pour Sea of Thieves (bêta).
 
+👉 **[Page de présentation, téléchargement et guide](https://powange.github.io/streamdeck-sot/)**
+
 ![Exemple de Stream Deck avec le plugin : minuteurs de cuisson, mégalodon AFK, journée en jeu, chronos, compteur, heure en jeu, bourse, tempête, saison et commendation](docs/screenshot.png)
 
 ## Installation
