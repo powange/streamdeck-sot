@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="fr">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Sea of Thieves pour Stream Deck</title>
+	<meta name="description" content="Plugin Stream Deck gratuit pour Sea of Thieves : minuteurs de cuisson, mégalodon AFK, heure en jeu, tempête, commendations, bourse, saison et plus." />
+	<meta property="og:title" content="Sea of Thieves pour Stream Deck" />
+	<meta property="og:description" content="Minuteurs de cuisson, heure en jeu, tempête, commendations, bourse… sur ton Stream Deck." />
+	<meta property="og:image" content="https://powange.github.io/streamdeck-sot/screenshot.png" />
+	<link rel="icon" href="img/logo.png" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Pirata+One&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			--bg: #070b0f;
+			--panel: #0f1820;
+			--panel-2: #15212b;
+			--line: #24343e;
+			--text: #f4ecd8;
+			--muted: #a9b9c2;
+			--gold: #e8b93a;
+			--gold-dark: #9c7414;
+			--teal: #3fa7b5;
+			--green: #46c063;
+			--radius: 14px;
+		}
+		* { box-sizing: border-box; }
+		html { scroll-behavior: smooth; }
+		body {
+			margin: 0;
+			font-family: Inter, system-ui, sans-serif;
+			background: var(--bg);
+			color: var(--text);
+			line-height: 1.6;
+		}
+		a { color: var(--gold); }
+		img { max-width: 100%; display: block; }
+		.wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+		h1, h2 { font-family: "Pirata One", Georgia, serif; font-weight: 400; letter-spacing: 0.5px; }
+		h2 { font-size: 2.6rem; margin: 0 0 8px; color: var(--gold); }
+		h3 { margin: 0 0 6px; font-size: 1.15rem; }
+		.lead { color: var(--muted); font-size: 1.1rem; max-width: 760px; }
+		section { padding: 72px 0; border-top: 1px solid #111b23; }
+
+		/* Navigation */
+		nav { position: sticky; top: 0; z-index: 10; background: rgba(7, 11, 15, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid #111b23; }
+		nav .wrap { display: flex; align-items: center; gap: 20px; height: 60px; }
+		nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--text); text-decoration: none; }
+		nav .brand img { width: 34px; height: 34px; border-radius: 8px; }
+		nav .links { margin-left: auto; display: flex; gap: 18px; }
+		nav .links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+		nav .links a:hover { color: var(--text); }
+		@media (max-width: 760px) { nav .links { display: none; } }
+
+		/* Hero */
+		.hero { padding: 64px 0 40px; text-align: center; background: radial-gradient(ellipse at top, #12303a 0%, var(--bg) 60%); }
+		.hero img.logo { width: 120px; height: 120px; margin: 0 auto 12px; border-radius: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); }
+		.hero h1 { font-size: clamp(2.8rem, 7vw, 4.6rem); margin: 0; line-height: 1.05; }
+		.hero h1 span { color: var(--gold); }
+		.hero .lead { margin: 14px auto 28px; }
+		.actions { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+		.btn {
+			display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px;
+			font-weight: 800; font-size: 1.05rem; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;
+		}
+		.btn:hover { transform: translateY(-2px); }
+		.btn-primary { background: var(--gold); color: #10161a; box-shadow: 0 6px 24px rgba(232, 185, 58, 0.35); }
+		.btn-secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+		.btn svg { width: 22px; height: 22px; }
+		.btn .count { background: rgba(255, 255, 255, 0.1); padding: 2px 10px; border-radius: 999px; font-size: 0.95rem; }
+		.meta { margin-top: 14px; color: var(--muted); font-size: 0.9rem; }
+		.screenshot { margin: 44px auto 0; max-width: 960px; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7); }
+
+		/* Steps */
+		.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 32px; }
+		.step { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; position: relative; }
+		.step .num { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); color: #10161a; font-weight: 800; display: grid; place-items: center; margin-bottom: 12px; font-size: 1.2rem; }
+		.step p { margin: 0; color: var(--muted); }
+		.note { margin-top: 24px; padding: 14px 18px; border-left: 4px solid var(--teal); background: var(--panel); border-radius: 8px; color: var(--muted); }
+		.note b { color: var(--text); }
+
+		/* Buttons gallery */
+		.cat { margin-top: 40px; }
+		.cat > h3 { font-size: 1.4rem; color: var(--text); margin-bottom: 4px; }
+		.cat > p { color: var(--muted); margin: 0 0 18px; }
+		.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+		.card { display: flex; gap: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+		.card .key { flex: 0 0 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid #2b2b2b; background: #000; }
+		.card p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+		.card .how { margin-top: 8px; font-size: 0.85rem; color: var(--text); }
+		.tag { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+		.tag.net { background: #12303a; color: var(--teal); }
+		.tag.local { background: #1c2a12; color: var(--green); }
+
+		/* Settings mock */
+		.config { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; margin-top: 32px; }
+		@media (max-width: 860px) { .config { grid-template-columns: 1fr; } }
+		.config ol { padding-left: 22px; color: var(--muted); }
+		.config ol li { margin-bottom: 10px; }
+		.config ol b { color: var(--text); }
+		.pi { background: #1e1e1e; border: 1px solid #3a3a3a; border-radius: 10px; overflow: hidden; font-size: 0.9rem; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+		.pi .bar { background: #2a2a2a; padding: 8px 12px; color: #cfcfcf; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+		.pi .bar img { width: 22px; height: 22px; border-radius: 4px; }
+		.pi .row { display: grid; grid-template-columns: 130px 1fr; gap: 10px; align-items: center; padding: 6px 12px; }
+		.pi .row label { color: #bdbdbd; text-align: right; }
+		.pi .field { background: #3a3a3a; border-radius: 4px; padding: 5px 10px; color: #e6e6e6; min-height: 28px; display: flex; align-items: center; justify-content: space-between; }
+		.pi .field.select::after { content: "▾"; color: #9a9a9a; }
+		.pi .field.pw { letter-spacing: 3px; }
+		.pi .check { display: flex; align-items: center; gap: 8px; color: #e6e6e6; }
+		.pi .check i { width: 16px; height: 16px; border-radius: 3px; background: #3a3a3a; display: inline-block; }
+		.pi .hint { padding: 0 12px 8px 152px; color: #8fa6b0; font-size: 0.8rem; }
+		.pi .space { height: 6px; }
+		.mocks { display: grid; gap: 20px; }
+		.caption { color: var(--muted); font-size: 0.85rem; margin: 6px 0 0; text-align: center; }
+
+		/* Token guide */
+		.guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-top: 24px; }
+		.guide .step p { font-size: 0.95rem; }
+		kbd { background: #2a2a2a; border: 1px solid #444; border-bottom-width: 3px; border-radius: 6px; padding: 1px 7px; font-family: inherit; font-size: 0.85rem; color: var(--text); }
+		code { background: #1a2630; padding: 1px 6px; border-radius: 4px; color: var(--gold); }
+
+		/* FAQ */
+		details { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 12px; }
+		summary { cursor: pointer; font-weight: 700; }
+		details p, details ul { color: var(--muted); margin: 10px 0 0; }
+
+		footer { padding: 40px 0 60px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid #111b23; }
+		footer .wrap { display: grid; gap: 10px; }
+	</style>
+</head>
+<body>
+	<nav>
+		<div class="wrap">
+			<a class="brand" href="#"><img src="img/logo.png" alt="" /> SoT pour Stream Deck</a>
+			<div class="links">
+				<a href="#installation">Installation</a>
+				<a href="#boutons">Les boutons</a>
+				<a href="#configuration">Configuration</a>
+				<a href="#faq">Questions</a>
+			</div>
+		</div>
+	</nav>
+
+	<header class="hero">
+		<div class="wrap">
+			<img class="logo" src="img/logo.png" alt="Logo du plugin" />
+			<h1>Sea of Thieves<br /><span>pour Stream Deck</span></h1>
+			<p class="lead">
+				Un plugin gratuit qui transforme ton Stream Deck en tableau de bord de pirate : minuteurs de cuisson qui sonnent avant que ça brûle,
+				mégalodon AFK, heure en jeu, prévisions de la tempête, progression des commendations, gains de ta session… sans quitter le jeu des yeux.
+			</p>
+			<div class="actions">
+				<a class="btn btn-primary" id="download" href="https://github.com/powange/streamdeck-sot/releases/latest/download/com.powange.seaofthieves.streamDeckPlugin">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+					Télécharger <span id="version"></span>
+				</a>
+				<a class="btn btn-secondary" href="https://github.com/powange/streamdeck-sot" title="Mettre une étoile sur GitHub">
+					<svg viewBox="0 0 24 24" fill="#e8b93a"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>
+					Mettre une étoile <span class="count" id="stars">★</span>
+				</a>
+			</div>
+			<p class="meta">Windows · Stream Deck 7.1 ou plus récent · Gratuit et open source<span id="downloads"></span></p>
+			<div class="screenshot"><img src="screenshot.png" alt="Un Stream Deck équipé du plugin Sea of Thieves" /></div>
+		</div>
+	</header>
+
+	<section id="installation">
+		<div class="wrap">
+			<h2>Installation</h2>
+			<p class="lead">Aucune commande, aucun code : trois clics suffisent.</p>
+			<div class="steps">
+				<div class="step">
+					<div class="num">1</div>
+					<h3>Télécharge le plugin</h3>
+					<p>Clique sur le bouton doré <b>Télécharger</b> en haut de la page. Tu obtiens un fichier <code>.streamDeckPlugin</code>.</p>
+				</div>
+				<div class="step">
+					<div class="num">2</div>
+					<h3>Double-clique dessus</h3>
+					<p>L'application Stream Deck s'ouvre et installe le plugin. Accepte si elle te demande une confirmation.</p>
+				</div>
+				<div class="step">
+					<div class="num">3</div>
+					<h3>Glisse les boutons</h3>
+					<p>Dans la liste des actions à droite, ouvre la catégorie <b>Sea of Thieves</b> et glisse les actions que tu veux sur les touches de ton Stream Deck.</p>
+				</div>
+			</div>
+			<div class="note">
+				<b>Mise à jour :</b> télécharge la nouvelle version et double-clique dessus, comme pour l'installation. Tes boutons et leurs réglages sont conservés.
+			</div>
+		</div>
+	</section>
+
+	<section id="boutons">
+		<div class="wrap">
+			<h2>Les boutons</h2>
+			<p class="lead">
+				Chaque bouton se règle en le sélectionnant dans l'application Stream Deck.
+				<span class="tag local">sans connexion</span> fonctionne sur ton PC uniquement ;
+				<span class="tag net">connecté</span> va chercher des informations en ligne.
+			</p>
+
+			<div class="cat">
+				<h3>⏱️ Minuteurs</h3>
+				<p>Pour ne plus jamais brûler un poisson ni oublier le mégalodon. Ils sonnent, clignotent et continuent même si tu changes de page.</p>
+				<div class="cards">
+					<div class="card">
+						<img class="key" src="img/keys/cooking.png" alt="Minuteur de cuisson" />
+						<div>
+							<h3>Minuteur de cuisson <span class="tag local">sans connexion</span></h3>
+							<p>Poisson, trophée, poulet, porc, serpent, requin, kraken, mégalodon : le temps s'affiche, passe au vert quand c'est cuit et clignote en rouge avant que ça brûle.</p>
+							<p class="how">Appuie quand tu poses la nourriture sur le feu.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/timer.png" alt="Minuteur mégalodon AFK" />
+						<div>
+							<h3>Minuteur <span class="tag local">sans connexion</span></h3>
+							<p>Mégalodon AFK (1 h 30), journée en jeu (24 min, en boucle avec le nombre de cycles) ou durée libre. Une fois fini, il compte le temps écoulé en négatif.</p>
+							<p class="how">Appui court : démarrer / pause. Appui long : remise à zéro.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/stopwatch.png" alt="Chronomètre" />
+						<div>
+							<h3>Chronomètre <span class="tag local">sans connexion</span></h3>
+							<p>Un chrono simple pour mesurer un voyage, un combat ou ta session. Il survit aux redémarrages.</p>
+							<p class="how">Appui court : démarrer / pause. Appui long : remise à zéro.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/clock.png" alt="Heure en jeu" />
+						<div>
+							<h3>Heure en jeu <span class="tag local">sans connexion</span></h3>
+							<p>L'heure du jeu, le moment de la journée, et le contour du bouton qui sert d'horloge (point rouge). Compte aussi les jours passés en mer.</p>
+							<p class="how">Appui court : démarrer le compteur de jours. Appui long : remise à zéro.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/storm.png" alt="Tempête" />
+						<div>
+							<h3>Tempête <span class="tag net">connecté</span></h3>
+							<p>L'île où se trouve la tempête, ou l'une des 5 suivantes, et dans combien de temps elle y arrive. Prévisions de Merfolk's Lullaby.</p>
+							<p class="how">Mets plusieurs boutons (+1, +2, +3) pour voir son trajet.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/counter.png" alt="Compteur" />
+						<div>
+							<h3>Compteur de session <span class="tag local">sans connexion</span></h3>
+							<p>Coffres, crânes, morts, navires coulés… compte ce que tu veux pendant ta session.</p>
+							<p class="how">Appui court : +1. Appui long : remise à zéro.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="cat">
+				<h3>🏴‍☠️ Ton profil de pirate</h3>
+				<p>Ces boutons lisent ton profil sur seaofthieves.com : il faut d'abord <a href="#token">connecter ton compte</a> une fois.</p>
+				<div class="cards">
+					<div class="card">
+						<img class="key" src="img/keys/commendation.png" alt="Commendation" />
+						<div>
+							<h3>Commendation <span class="tag net">connecté</span></h3>
+							<p>La progression d'une commendation, avec son image, son grade et la barre d'avancement.</p>
+							<p class="how">Choisis faction → campagne → commendation. Appuie pour actualiser.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/faction.png" alt="Niveau de faction" />
+						<div>
+							<h3>Niveau de faction <span class="tag net">connecté</span></h3>
+							<p>Le niveau, la distinction et la progression d'une compagnie, des Gardiens, des Serviteurs ou de ta guilde.</p>
+							<p class="how">Choisis la faction. Appuie pour actualiser.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/balance.png" alt="Bourse" />
+						<div>
+							<h3>Bourse <span class="tag net">connecté</span></h3>
+							<p>Ton or, tes doublons ou tes pièces anciennes : en total, ou ce que tu as gagné depuis le lancement du jeu (calculé automatiquement).</p>
+							<p class="how">Choisis la monnaie et l'affichage. Appuie pour actualiser.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/season.png" alt="Saison" />
+						<div>
+							<h3>Saison <span class="tag net">connecté</span></h3>
+							<p>Ton niveau de renommée dans la saison en cours et les jours restants avant la fin.</p>
+							<p class="how">Rien à régler. Appuie pour actualiser.</p>
+						</div>
+					</div>
+					<div class="card">
+						<img class="key" src="img/keys/xbox.png" alt="Succès Xbox" />
+						<div>
+							<h3>Succès Xbox <span class="tag net">connecté</span></h3>
+							<p>La progression d'un succès Xbox de Sea of Thieves, via le service tiers OpenXBL (clé gratuite à créer sur xbl.io).</p>
+							<p class="how">Choisis le succès. Appuie pour actualiser.</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section id="configuration">
+		<div class="wrap">
+			<h2>Configuration</h2>
+			<p class="lead">Tous les réglages se font dans l'application Stream Deck, sans rien installer d'autre.</p>
+			<div class="config">
+				<div>
+					<ol>
+						<li><b>Clique sur un bouton</b> du plugin sur ton Stream Deck (dans l'application). Ses réglages s'affichent en bas de la fenêtre.</li>
+						<li><b>Choisis ce qu'il affiche</b> dans les listes : l'aliment, le minuteur, la faction, la monnaie, l'île…</li>
+						<li><b>Titre :</b> le champ « Titre » de Stream Deck remplace le nom affiché sur le bouton (par exemple « Méga » ou « Coffres »). Laisse l'option d'affichage du titre de Stream Deck désactivée : le plugin l'écrit lui-même.</li>
+						<li><b>Disposition :</b> coche « Texte en haut, image en bas » pour inverser le bouton.</li>
+						<li><b>Sons</b> (minuteurs) : activés par défaut, tu peux les couper ou choisir ton propre fichier <code>.wav</code> pour la fin.</li>
+					</ol>
+					<div class="note">Les réglages sont enregistrés automatiquement, il n'y a pas de bouton « Enregistrer ».</div>
+				</div>
+				<div class="mocks">
+					<div>
+						<div class="pi">
+							<div class="bar"><img src="img/keys/commendation.png" alt="" /> Commendation</div>
+							<div class="space"></div>
+							<div class="row"><label>Token RAT</label><div class="field pw">••••••••••••••</div></div>
+							<div class="hint">Token renouvelé par le site le 20/10 à 21:14.</div>
+							<div class="row"><label>Faction</label><div class="field select">Appel du chasseur (312/340)</div></div>
+							<div class="row"><label>Campagne</label><div class="field select">Distinctions de Merrick</div></div>
+							<div class="row"><label>Commendation</label><div class="field select">Chasseur de poissons trophées (18/25)</div></div>
+							<div class="row"><label>Actualisation</label><div class="field select">Toutes les 15 min</div></div>
+							<div class="row"><label>Disposition</label><div class="check"><i></i> Texte en haut, image en bas</div></div>
+							<div class="space"></div>
+						</div>
+						<p class="caption">Exemple : choisir une commendation en trois listes.</p>
+					</div>
+					<div>
+						<div class="pi">
+							<div class="bar"><img src="img/keys/storm.png" alt="" /> Tempête</div>
+							<div class="space"></div>
+							<div class="row"><label>Île</label><div class="field select">Prochaine île (+1)</div></div>
+							<div class="row"><label>Disposition</label><div class="check"><i></i> Texte en haut, image en bas</div></div>
+							<div class="space"></div>
+						</div>
+						<p class="caption">Exemple : la tempête n'a besoin que d'un choix.</p>
+					</div>
+				</div>
+			</div>
+
+			<h2 id="token" style="margin-top: 64px; font-size: 2rem">Connecter ton profil seaofthieves.com</h2>
+			<p class="lead">
+				Les boutons Commendation, Niveau de faction, Bourse et Saison lisent ton profil sur le site officiel. Rare ne propose pas de connexion pour les applications :
+				il faut copier une seule fois un « cookie » de ton navigateur, appelé <code>rat</code>. Ensuite, le plugin le garde à jour tout seul.
+			</p>
+			<div class="guide">
+				<div class="step">
+					<div class="num">1</div>
+					<h3>Connecte-toi</h3>
+					<p>Ouvre <a href="https://www.seaofthieves.com/fr/profile/reputation">seaofthieves.com</a> dans Chrome ou Edge et connecte-toi avec ton compte Microsoft.</p>
+				</div>
+				<div class="step">
+					<div class="num">2</div>
+					<h3>Ouvre les outils</h3>
+					<p>Appuie sur <kbd>F12</kbd>, puis va dans l'onglet <b>Application</b> → <b>Cookies</b> → <code>https://www.seaofthieves.com</code>.</p>
+				</div>
+				<div class="step">
+					<div class="num">3</div>
+					<h3>Copie le cookie</h3>
+					<p>Clique sur la ligne <code>rat</code>, puis copie le contenu de la colonne <b>Valeur</b> (<kbd>Ctrl</kbd> + <kbd>C</kbd>).</p>
+				</div>
+				<div class="step">
+					<div class="num">4</div>
+					<h3>Colle-le dans Stream Deck</h3>
+					<p>Dans les réglages d'un de ces boutons, colle-le dans <b>Token RAT</b>. Il sert à tous les boutons d'un coup.</p>
+				</div>
+			</div>
+			<div class="note">
+				<b>Important :</b> ce cookie donne accès à ton compte sur seaofthieves.com. Il reste sur ton PC, dans les réglages de Stream Deck : ne le partage jamais avec personne.
+				S'il expire, les boutons affichent « Connexion expirée » : il suffit de recommencer ces étapes.
+			</div>
+		</div>
+	</section>
+
+	<section id="faq">
+		<div class="wrap">
+			<h2>Questions</h2>
+			<details>
+				<summary>Est-ce que c'est autorisé ? Est-ce que je risque quelque chose en jeu ?</summary>
+				<p>Le plugin ne touche pas au jeu : il ne lit ni ne modifie rien dans Sea of Thieves. Les minuteurs et l'heure en jeu sont calculés sur ton PC ; les boutons connectés lisent les mêmes informations que celles que tu vois sur ton profil du site officiel.</p>
+			</details>
+			<details>
+				<summary>Est-ce que ça marche sur Mac ?</summary>
+				<p>Non, pour l'instant le plugin est prévu pour Windows (Steam et application Xbox).</p>
+			</details>
+			<details>
+				<summary>Est-ce que les boutons font beaucoup de requêtes sur Internet ?</summary>
+				<p>Non. Les boutons connectés ne demandent des informations que lorsqu'ils sont affichés, quand tu appuies dessus ou à l'intervalle que tu choisis. La tempête est actualisée toutes les 24 minutes, comme sur la carte de Merfolk's Lullaby.</p>
+			</details>
+			<details>
+				<summary>Le gain d'or est négatif, c'est normal ?</summary>
+				<p>Oui si tu as acheté quelque chose : le bouton Bourse affiche le bilan de ta session, achats compris. Le site met aussi ses chiffres à jour avec quelques minutes de retard.</p>
+			</details>
+			<details>
+				<summary>Je n'entends pas les sons des minuteurs.</summary>
+				<p>Vérifie que l'option « Son » est activée dans les réglages du bouton et que le volume de Windows n'est pas coupé. Les sons partent avec environ une seconde de retard.</p>
+			</details>
+			<details>
+				<summary>Comment mettre à jour le plugin ?</summary>
+				<p>Télécharge la dernière version avec le bouton doré et double-clique sur le fichier. Tes boutons, leurs réglages, tes minuteurs en cours et tes compteurs sont conservés.</p>
+			</details>
+			<details>
+				<summary>J'ai trouvé un bug ou j'ai une idée.</summary>
+				<p>Ouvre un ticket sur <a href="https://github.com/powange/streamdeck-sot/issues">la page GitHub du projet</a> (bouton « New issue »), avec une capture si possible.</p>
+			</details>
+		</div>
+	</section>
+
+	<footer>
+		<div class="wrap">
+			<div>Plugin non officiel et gratuit, créé par un fan. <a href="https://github.com/powange/streamdeck-sot">Code source sur GitHub</a>.</div>
+			<div>Prévisions de la tempête : <a href="https://www.merfolkslullaby.com/map?tab=weather">Merfolk's Lullaby</a>. Icônes des factions : <a href="https://seaofthieves.wiki.gg/">wiki Sea of Thieves</a>.</div>
+			<div>Sea of Thieves © Microsoft Corporation. Ce plugin a été créé dans le cadre des règles d'utilisation du contenu de jeu de Microsoft à l'aide de ressources de Sea of Thieves ; il n'est ni approuvé par Microsoft ni affilié à Microsoft. Stream Deck est une marque d'Elgato.</div>
+		</div>
+	</footer>
+
+	<script>
+		// Live figures from GitHub: stars, latest version and download count. The page works without them.
+		const repo = "powange/streamdeck-sot";
+		fetch(`https://api.github.com/repos/${repo}`)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((data) => {
+				if (data && typeof data.stargazers_count === "number") {
+					document.getElementById("stars").textContent = `★ ${data.stargazers_count}`;
+				}
+			})
+			.catch(() => {});
+		fetch(`https://api.github.com/repos/${repo}/releases?per_page=100`)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((releases) => {
+				if (!Array.isArray(releases) || releases.length === 0) return;
+				document.getElementById("version").textContent = releases[0].tag_name;
+				const total = releases.reduce((sum, rel) => sum + rel.assets.reduce((s, a) => s + (a.download_count || 0), 0), 0);
+				if (total > 0) {
+					document.getElementById("downloads").textContent = ` · ${total.toLocaleString("fr-FR")} téléchargements`;
+				}
+			})
+			.catch(() => {});
+	</script>
+</body>
+</html>
