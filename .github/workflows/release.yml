@@ -1,11 +1,12 @@
 name: Release
 
 # Pushing a tag such as v0.2.0 builds the plugin and publishes a GitHub release with the installable
-# .streamDeckPlugin file (double-click to install).
+# .streamDeckPlugin file (double-click to install). Running it manually builds and packs without publishing.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,7 +20,12 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
+          # Always take the latest 24.x (security fixes) instead of the version cached on the runner.
+          check-latest: true
           cache: npm
+
+      - name: Node.js version
+        run: node --version
 
       - run: npm ci
 
@@ -32,9 +38,12 @@ jobs:
           mv manifest.tmp com.powange.seaofthieves.sdPlugin/manifest.json
 
       - name: Pack plugin
-        run: npx streamdeck pack com.powange.seaofthieves.sdPlugin --version "${GITHUB_REF_NAME#v}" --output dist --force --no-file-list
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; else VERSION="0.0.0"; fi
+          npx streamdeck pack com.powange.seaofthieves.sdPlugin --version "$VERSION" --output dist --force --no-file-list
 
       - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" dist/com.powange.seaofthieves.streamDeckPlugin --title "$GITHUB_REF_NAME" --generate-notes
