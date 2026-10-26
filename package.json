@@ -1,6 +1,6 @@
 {
     "name": "streamdeck-sot",
-    "version": "0.7.2",
+    "version": "0.7.3",
     "private": true,
     "description": "Stream Deck plugin for Sea of Thieves: cooking timers and session counters.",
     "scripts": {
