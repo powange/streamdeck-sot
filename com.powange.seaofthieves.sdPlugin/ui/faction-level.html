@@ -23,6 +23,10 @@
 
 		<p id="token-info" class="help" style="margin: 0 0 8px 0"></p>
 
+		<sdpi-item label="Session">
+			<sdpi-button id="open-site">Ouvrir seaofthieves.com</sdpi-button>
+		</sdpi-item>
+
 		<sdpi-item label="Faction">
 			<sdpi-select setting="itemId" datasource="getFactionLevels" hot-reload show-refresh loading="Chargement…" placeholder="Choisir une faction" label-setting="itemLabel"></sdpi-select>
 		</sdpi-item>
@@ -52,6 +56,11 @@
 		</details>
 
 		<script>
+			// Opens the profile page in the browser, to log in again and copy a new "rat" cookie.
+			document.getElementById("open-site").addEventListener("click", () => {
+				SDPIComponents.streamDeckClient.send("openUrl", { url: "https://www.seaofthieves.com/fr/profile/reputation" });
+			});
+
 			// Validity of the RAT token, sent by the plugin.
 			SDPIComponents.streamDeckClient.sendToPropertyInspector.subscribe((message) => {
 				const payload = message && message.payload;

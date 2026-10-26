@@ -10,7 +10,7 @@ import streamDeck, {
 import type { JsonObject } from "@elgato/utils";
 
 import { ApiError, type ProgressItem } from "../api/progress";
-import { tokenInfo, tokenWarning } from "../api/rat-token";
+import { LOGIN_URL, tokenInfo, tokenWarning } from "../api/rat-token";
 import { cleanTitle, COLORS, composeKey, fitText, GRID, image, type KeyStyle, label, pill, place, progressBar, text, toDataUrl } from "../svg";
 
 export type ProgressSettings = JsonObject & {
@@ -39,6 +39,8 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 	private readonly settings = new Map<string, T>();
 	private readonly refreshTimers = new Map<string, ReturnType<typeof setInterval>>();
 	private readonly titles = new Map<string, string | undefined>();
+	/** Keys whose last refresh failed for lack of a valid seaofthieves.com session. */
+	private readonly loggedOut = new Set<string>();
 
 	/** Text shown when {@link fetchItem} returns nothing; defaults to {@link placeholder}. */
 	protected placeholderFor(_settings: T): [string, string] {
@@ -102,6 +104,10 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 		const ok = await this.refresh(action, true);
 		if (action.isKey()) {
 			await (ok ? action.showOk() : action.showAlert());
+		}
+		// Still no valid session: open the site so the user can log in and copy a new cookie.
+		if (!ok && this.loggedOut.has(action.id)) {
+			await streamDeck.system.openUrl(LOGIN_URL);
 		}
 		for (const other of this.actions) {
 			if (other.id !== action.id) {
@@ -177,12 +183,20 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 			}
 			const picture = item.imageData ?? (item.imageUrl ? await loadImage(item.imageUrl) : undefined);
 			await action.setImage(toDataUrl(renderProgressKey(item, picture, this.fallbackIcon, style)));
+			this.loggedOut.delete(action.id);
 			return true;
 		} catch (error) {
 			streamDeck.logger.warn(`Refresh failed for ${this.manifestId}: ${error instanceof Error ? error.message : error}`);
-			await action.setImage(
-				toDataUrl(renderMessageKey(this.fallbackIcon, ...errorMessage(error), style, await this.messagePicture(settings))),
-			);
+			const loggedOut = this.usesRatToken && error instanceof ApiError && (error.kind === "auth" || error.kind === "missing-credentials");
+			if (loggedOut) {
+				this.loggedOut.add(action.id);
+			} else {
+				this.loggedOut.delete(action.id);
+			}
+			const message: [string, string] = loggedOut
+				? [error.kind === "auth" ? "Connexion expirée" : "Connexion", "Appuie ici"]
+				: errorMessage(error);
+			await action.setImage(toDataUrl(renderMessageKey(this.fallbackIcon, ...message, style, await this.messagePicture(settings))));
 			return false;
 		}
 	}

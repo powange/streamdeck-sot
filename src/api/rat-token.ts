@@ -2,6 +2,9 @@ import streamDeck from "@elgato/streamdeck";
 
 import { getGlobalSettings, onGlobalSettingsChanged, updateGlobalSettings } from "../global-settings";
 
+/** Profile page of seaofthieves.com, opened to log in again when the session has expired. */
+export const LOGIN_URL = "https://www.seaofthieves.com/fr/profile/reputation";
+
 /** Keys show a warning when the token expires within this many days. */
 const WARNING_DAYS = 3;
 
