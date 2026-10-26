@@ -10,7 +10,9 @@ import streamDeck, {
 import type { JsonObject } from "@elgato/utils";
 
 import { ApiError, type ProgressItem } from "../api/progress";
-import { LOGIN_URL, tokenInfo, tokenWarning } from "../api/rat-token";
+import { tokenInfo, tokenWarning } from "../api/rat-token";
+import { updateGlobalSettings } from "../global-settings";
+import { promptForToken } from "../token-dialog";
 import { cleanTitle, COLORS, composeKey, fitText, GRID, image, type KeyStyle, label, pill, place, progressBar, text, toDataUrl } from "../svg";
 
 export type ProgressSettings = JsonObject & {
@@ -105,9 +107,13 @@ export abstract class ProgressAction<T extends ProgressSettings> extends Singlet
 		if (action.isKey()) {
 			await (ok ? action.showOk() : action.showAlert());
 		}
-		// Still no valid session: open the site so the user can log in and copy a new cookie.
+		// Still no valid session: ask for a new cookie (the dialog links to the site to get one). Saving it reloads
+		// every profile key.
 		if (!ok && this.loggedOut.has(action.id)) {
-			await streamDeck.system.openUrl(LOGIN_URL);
+			const token = await promptForToken();
+			if (token) {
+				await updateGlobalSettings({ ratCookie: token });
+			}
 		}
 		for (const other of this.actions) {
 			if (other.id !== action.id) {
