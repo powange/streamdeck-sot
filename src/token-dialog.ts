@@ -3,6 +3,9 @@ import { spawn } from "node:child_process";
 
 import { LOGIN_URL, normalizeToken } from "./api/rat-token";
 
+/** The dialog closes by itself after this long without an answer. */
+const DIALOG_TIMEOUT_MS = 10 * 60_000;
+
 /**
  * Windows Forms dialog asking for a new `rat` cookie, written to stdout when validated. Run through PowerShell, which
  * the plugin already relies on for sounds.
@@ -55,6 +58,19 @@ $cancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 $form.Controls.Add($cancel)
 $form.CancelButton = $cancel
 
+# The process is started hidden, and Windows applies that to the first window it shows: show and hide the form
+# once, invisibly, so that ShowDialog below really displays it.
+$form.Opacity = 0
+$form.Show()
+$form.Hide()
+$form.Opacity = 1
+
+# Close by itself if left open, so a forgotten dialog never blocks the next key presses.
+$timer = New-Object System.Windows.Forms.Timer
+$timer.Interval = ${DIALOG_TIMEOUT_MS}
+$timer.add_Tick({ $form.DialogResult = [System.Windows.Forms.DialogResult]::Cancel; $form.Close() })
+$timer.Start()
+
 $form.Add_Shown({ $form.Activate(); $token.Focus() })
 if ($form.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 	[Console]::Out.Write($token.Text)
@@ -86,6 +102,8 @@ export function promptForToken(): Promise<string | undefined> {
 			resolve(undefined);
 		});
 		child.on("close", () => resolve(normalizeToken(output)));
+		// Safety net in case PowerShell itself hangs.
+		setTimeout(() => child.kill(), DIALOG_TIMEOUT_MS + 30_000).unref();
 	}).finally(() => (open = undefined));
 
 	return open;
