@@ -216,10 +216,27 @@ function preset(settings: TimerSettings): TimerPreset {
 	return getTimerPreset(settings.preset);
 }
 
-/** Duration in seconds: the custom duration if set, otherwise the preset's. */
+/**
+ * Duration in seconds: the custom duration if set (or the minutes of older versions), otherwise the preset's.
+ */
 function duration(settings: TimerSettings): number {
-	const minutes = Number(settings.minutes);
-	return settings.minutes !== "" && Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes * 60) : preset(settings).seconds;
+	return parseDuration(settings.duration) ?? parseMinutes(settings.minutes) ?? preset(settings).seconds;
+}
+
+/**
+ * Parses a duration typed as seconds ("90") or as m:ss / h:mm:ss ("1:30", "1:30:00").
+ */
+export function parseDuration(value: string | number | undefined): number | undefined {
+	if (value === undefined || String(value).trim() === "") return undefined;
+	const parts = String(value).trim().split(":");
+	if (parts.length > 3 || parts.some((part) => !/^\d+$/.test(part))) return undefined;
+	const seconds = parts.reduce((total, part) => total * 60 + Number(part), 0);
+	return seconds > 0 ? seconds : undefined;
+}
+
+function parseMinutes(value: string | number | undefined): number | undefined {
+	const minutes = Number(value);
+	return value !== undefined && value !== "" && Number.isFinite(minutes) && minutes > 0 ? Math.round(minutes * 60) : undefined;
 }
 
 function isRepeating(settings: TimerSettings): boolean {
@@ -315,7 +332,9 @@ type TimerSettings = SoundSettings & {
 	/** Label of versions before 0.3; the Stream Deck title is used instead now. */
 	label?: string;
 	textOnTop?: boolean;
-	/** Custom duration in minutes; the property inspector stores it as a string. */
+	/** Custom duration in seconds, or as m:ss / h:mm:ss; the property inspector stores it as a string. */
+	duration?: string;
+	/** Custom duration in minutes, from versions before 0.7.5 (used when `duration` is empty). */
 	minutes?: number | string;
 	/** "yes" / "no", or empty to follow the preset. */
 	repeat?: string;
