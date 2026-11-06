@@ -90,14 +90,15 @@ function borderPoint(fraction: number): [number, number] {
  */
 function dayBadge(day: number, style: "cycle" | "counting" | "stopped"): string {
 	const label = `Jour ${day}`;
-	const width = label.length * 8.6 + 12;
-	const right = KEY_SIZE - BORDER_INSET - 6;
+	const size = 18;
+	const width = label.length * size * 0.58 + 14;
+	const right = KEY_SIZE - BORDER_INSET - 5;
 	const x = (right - width).toFixed(1);
 	const pill =
 		style === "cycle"
-			? `<rect x="${x}" y="16" width="${(width - 2).toFixed(1)}" height="19" rx="9.5" fill="none" stroke="${COLORS.gold}" stroke-width="2"/>`
-			: `<rect x="${x}" y="15" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${style === "stopped" ? COLORS.muted : COLORS.gold}"/>`;
-	return pill + text(right - width / 2, 31, label, 15, style === "cycle" ? COLORS.gold : COLORS.ink);
+			? `<rect x="${x}" y="15" width="${(width - 2).toFixed(1)}" height="24" rx="12" fill="none" stroke="${COLORS.gold}" stroke-width="2"/>`
+			: `<rect x="${x}" y="14" width="${width.toFixed(1)}" height="26" rx="13" fill="${style === "stopped" ? COLORS.muted : COLORS.gold}"/>`;
+	return pill + text(right - width / 2, 33, label, size, style === "cycle" ? COLORS.gold : COLORS.ink);
 }
 
 /**
@@ -205,7 +206,7 @@ export function renderClockKey(time: GameTime, style: KeyStyle = {}, counter?: C
 	const key = composeKey(
 		{
 			visual:
-				place(periodIcon(time.period), 40, 42, 0.7) +
+				place(periodIcon(time.period), 34, 48, 0.62) +
 				(counter ? dayBadge(counter.day, counter.stopped ? "stopped" : "counting") : dayBadge(time.day, "cycle")),
 			info:
 				text(72, 98, `${time.hours}:${String(time.minutes).padStart(2, "0")}`, 32) +

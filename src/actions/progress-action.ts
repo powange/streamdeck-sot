@@ -13,7 +13,7 @@ import { ApiError, type ProgressItem } from "../api/progress";
 import { tokenInfo, tokenWarning } from "../api/rat-token";
 import { updateGlobalSettings } from "../global-settings";
 import { promptForToken } from "../token-dialog";
-import { cleanTitle, COLORS, composeKey, fitText, GRID, image, type KeyStyle, label, pill, place, progressBar, text, toDataUrl } from "../svg";
+import { cleanTitle, COLORS, composeKey, fitText, GRID, image, KEY_SIZE, type KeyStyle, label, pill, pillWidth, place, progressBar, text, toDataUrl } from "../svg";
 
 export type ProgressSettings = JsonObject & {
 	itemId?: string;
@@ -260,7 +260,7 @@ export function renderProgressKey(item: ProgressItem, picture: string | undefine
 	return composeKey(
 		{
 			visual:
-				keyPicture(picture, item.icon ?? fallbackIcon) +
+				keyPicture(picture, item.icon ?? fallbackIcon, item.badge, item.warning) +
 				(item.badge ? pill(item.badge) : "") +
 				(item.warning ? pill(item.warning, { left: 6, fill: COLORS.cooking }) : ""),
 			info: fitText(72, GRID.valueY, value, GRID.valueSize, item.completed ? COLORS.cooked : COLORS.text) + (name ? label(name) : ""),
@@ -283,8 +283,20 @@ export function renderMessageKey(icon: string, line1: string, line2: string, sty
 }
 
 /** Raster picture, or drawn icon, in the picture slot of the grid. */
-function keyPicture(picture: string | undefined, icon: string): string {
-	return picture ? image(picture, (144 - GRID.pictureSize) / 2, GRID.pictureY, GRID.pictureSize) : place(icon, 72, GRID.iconY);
+/**
+ * Raster picture, or drawn icon, in the picture slot of the grid. It fits between the badge (top right) and the
+ * warning (top left) when they are shown: centred if possible, shifted aside, or smaller if both are present.
+ */
+function keyPicture(picture: string | undefined, icon: string, badge?: string, warning?: string): string {
+	const gap = 4;
+	const left = warning ? 6 + pillWidth(warning) + gap : 6;
+	const right = badge ? KEY_SIZE - 4 - pillWidth(badge) - gap : KEY_SIZE - 6;
+	const size = Math.max(28, Math.min(GRID.pictureSize, right - left));
+	const centre = Math.min(Math.max(KEY_SIZE / 2, left + size / 2), right - size / 2);
+	const scale = size / GRID.pictureSize;
+	return picture
+		? image(picture, centre - size / 2, GRID.pictureY, size)
+		: place(icon, centre, GRID.iconY - (GRID.pictureSize - size) / 2, scale);
 }
 
 function compact(value: number): string {

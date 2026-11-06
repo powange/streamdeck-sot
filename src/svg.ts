@@ -114,19 +114,29 @@ export function label(value: string, color: string = COLORS.muted, y: number = G
 	return text(72, y, truncate(value, GRID.labelSize), GRID.labelSize, color, "normal");
 }
 
+/** Font size of badges. */
+export const PILL_SIZE = 20;
+
+/** Width of a badge pill. */
+export function pillWidth(value: string): number {
+	return value.length * PILL_SIZE * CHAR_WIDTH + 14;
+}
+
 /**
  * Badge in a rounded pill: in the top-right corner by default, or aligned on `left`.
  */
 export function pill(
 	value: string,
-	{ left, right = KEY_SIZE - 6, top = 4, fill = COLORS.gold, color = COLORS.ink }: { left?: number; right?: number; top?: number; fill?: string; color?: string } = {},
+	{ left, right = KEY_SIZE - 4, top = 3, fill = COLORS.gold, color = COLORS.ink }: { left?: number; right?: number; top?: number; fill?: string; color?: string } = {},
 ): string {
-	const size = 15;
-	const width = value.length * size * CHAR_WIDTH + 12;
+	// Large enough to be read on the device: badges carry useful information (grade, days left, rank…).
+	const size = PILL_SIZE;
+	const height = size + 8;
+	const width = pillWidth(value);
 	const x = left ?? right - width;
 	return (
-		`<rect x="${x.toFixed(1)}" y="${top}" width="${width.toFixed(1)}" height="21" rx="10.5" fill="${fill}"/>` +
-		text(x + width / 2, top + 16, value, size, color)
+		`<rect x="${x.toFixed(1)}" y="${top}" width="${width.toFixed(1)}" height="${height}" rx="${height / 2}" fill="${fill}"/>` +
+		text(x + width / 2, top + size + 1, value, size, color)
 	);
 }
 
