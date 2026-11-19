@@ -85,6 +85,22 @@
 			]
 		},
 		{
+			"Name": "Eclipses",
+			"UUID": "com.powange.seaofthieves.eclipse",
+			"Icon": "imgs/actions/eclipse/icon",
+			"Tooltip": "Time left before the next eclipses (schedule from the SoT Achievements site). Press to refresh.",
+			"PropertyInspectorPath": "ui/eclipse.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/eclipse/key",
+					"ShowTitle": false
+				}
+			]
+		},
+		{
 			"Name": "Session Counter",
 			"UUID": "com.powange.seaofthieves.counter",
 			"Icon": "imgs/actions/counter/icon",

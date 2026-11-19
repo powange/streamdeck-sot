@@ -44,5 +44,9 @@
 	"com.powange.seaofthieves.game-clock": {
 		"Name": "Heure en jeu",
 		"Tooltip": "Heure en jeu, moment de la journée et jour du cycle de 30 jours, calculés à partir de l'heure réelle."
+	},
+	"com.powange.seaofthieves.eclipse": {
+		"Name": "Éclipses",
+		"Tooltip": "Temps restant avant les prochaines éclipses (calendrier du site SoT Achievements). Appuie pour actualiser."
 	}
 }

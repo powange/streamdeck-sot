@@ -3,6 +3,7 @@ import streamDeck from "@elgato/streamdeck";
 import { BalanceProgress } from "./actions/balance";
 import { CommendationProgress } from "./actions/commendation";
 import { CookingTimer } from "./actions/cooking-timer";
+import { EclipseSchedule } from "./actions/eclipse";
 import { SeasonProgressAction } from "./actions/season";
 import { FactionLevelProgress } from "./actions/faction-level";
 import { GameClock } from "./actions/game-clock";
@@ -25,6 +26,7 @@ streamDeck.actions.registerAction(new BalanceProgress());
 streamDeck.actions.registerAction(new SeasonProgressAction());
 streamDeck.actions.registerAction(new StormTracker());
 streamDeck.actions.registerAction(new GameClock());
+streamDeck.actions.registerAction(new EclipseSchedule());
 streamDeck.actions.registerAction(new XboxAchievementProgress());
 
 watchGameSessions();

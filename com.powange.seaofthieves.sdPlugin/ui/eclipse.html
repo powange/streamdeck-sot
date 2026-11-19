@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+	<head lang="fr">
+		<title>Éclipses</title>
+		<meta charset="utf-8" />
+		<script src="https://sdpi-components.dev/releases/v4/sdpi-components.js"></script>
+		<style>
+			.help {
+				font-size: 9pt;
+				line-height: 1.4;
+				color: #b0b0b0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<sdpi-item label="Afficher">
+			<sdpi-select setting="rank" default="1">
+				<option value="1">Prochaine éclipse (+1)</option>
+				<option value="2">+2</option>
+				<option value="3">+3</option>
+				<option value="all">Les 3 prochaines</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Disposition">
+			<sdpi-checkbox setting="textOnTop" label="Texte en haut, image en bas"></sdpi-checkbox>
+		</sdpi-item>
+
+		<sdpi-item label="Usage">
+			<p>Temps restant avant l'éclipse et heure de début. Appui court : actualiser le calendrier.</p>
+		</sdpi-item>
+
+		<p class="help">
+			Calendrier calculé selon la règle établie par la communauté (séries de 4 éclipses toutes les 11 h 12), recalé au besoin
+			sur le site <b>SoT Achievements</b> (achievements-sot.powange.com/tools/eclipses).
+		</p>
+	</body>
+</html>
