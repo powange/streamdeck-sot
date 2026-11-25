@@ -116,7 +116,7 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 	override async onKeyDown(ev: KeyDownEvent<BalanceSettings>): Promise<void> {
 		const { action } = ev;
 		const settings = ev.payload.settings;
-		if (settings.mode !== "session") {
+		if (!hasLongPress(settings)) {
 			// No long press in total mode: refresh on key up.
 			return;
 		}
@@ -125,14 +125,21 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 			action.id,
 			setTimeout(async () => {
 				this.presses.delete(action.id);
-				await this.startSession(action, settings);
+				if (settings.mode === "game") {
+					// Restarts the game session now: every "since game launch" key goes back to +0. In the background,
+					// as it retries for a while if the site is down; keys refresh once it is recorded.
+					void startGameSession();
+					if (action.isKey()) await action.showOk();
+				} else {
+					await this.startSession(action, settings);
+				}
 			}, LONG_PRESS_MS),
 		);
 	}
 
 	override async onKeyUp(ev: KeyUpEvent<BalanceSettings>): Promise<void> {
 		const pending = this.presses.get(ev.action.id);
-		if (ev.payload.settings.mode === "session" && pending === undefined) {
+		if (hasLongPress(ev.payload.settings) && pending === undefined) {
 			// The long press already started a session.
 			return;
 		}
@@ -164,6 +171,11 @@ export class BalanceProgress extends ProgressAction<BalanceSettings> {
 			if (action.isKey()) await action.showAlert();
 		}
 	}
+}
+
+/** Session keys restart their own session with a long press, game keys restart the shared game session. */
+function hasLongPress(settings: BalanceSettings): boolean {
+	return settings.mode === "session" || settings.mode === "game";
 }
 
 function toCurrency(value: string | undefined): Currency {
